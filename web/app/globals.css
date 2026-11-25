@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Tema Padrão: Preto & Roxo Neon (Dark Mode) */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0f;
+  --bg-card: rgba(23, 23, 23, 0.8);
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --border-color: rgba(168, 85, 247, 0.25);
+  --neon-purple: #9333ea;
+}
+
+[data-theme='light'] {
+  /* Tema Alternativo: Branco & Roxo Neon (Light Mode) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f7ff;
+  --bg-card: rgba(243, 238, 255, 0.9);
+  --text-primary: #0f0a1f;
+  --text-secondary: #4b5563;
+  --border-color: rgba(147, 51, 234, 0.3);
+  --neon-purple: #7e22ce;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Scrollbar personalizada para manter o aspeto profissional */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-purple);
+}
