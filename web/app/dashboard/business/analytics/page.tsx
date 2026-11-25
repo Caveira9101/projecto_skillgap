@@ -204,9 +204,18 @@ export default function BusinessAnalyticsPage() {
     loadAnalytics();
   }, [copy.generalDept]);
 
-  const maxJobs = activePlan?.activeJobsLimit ?? 3;
-  const maxRecruiters = activePlan?.recruitersLimit ?? 2;
-  const candidatesPerJob = activePlan?.candidatesPerJob ?? 5;
+  const rawMaxJobs = Number(activePlan?.activeJobsLimit);
+  const maxJobs = Number.isFinite(rawMaxJobs) && rawMaxJobs > 0 ? rawMaxJobs : 3;
+
+  const rawMaxRecruiters = Number(activePlan?.recruitersLimit);
+  const maxRecruiters =
+    Number.isFinite(rawMaxRecruiters) && rawMaxRecruiters > 0 ? rawMaxRecruiters : 2;
+
+  const rawCandidatesPerJob = Number(activePlan?.candidatesPerJob);
+  const candidatesPerJob =
+    Number.isFinite(rawCandidatesPerJob) && rawCandidatesPerJob > 0
+      ? rawCandidatesPerJob
+      : 5;
 
   const jobsPct = Math.min(100, Math.round((metrics.jobsCount / Math.max(1, maxJobs)) * 100));
   const recruitersPct = Math.min(
