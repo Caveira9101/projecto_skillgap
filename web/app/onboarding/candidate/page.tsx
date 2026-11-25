@@ -1,17 +1,16 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { getTranslation } from '@/lib/translations';
 
-export default function CandidateOnboarding() {
+function CandidateOnboardingContent() {
   const searchParams = useSearchParams();
   const [lang, setLang] = useState('en');
   const [step, setStep] = useState(1);
   const totalSteps = 5;
 
-  // Estados dos campos obrigatórios (Passo 1)
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
@@ -21,22 +20,17 @@ export default function CandidateOnboarding() {
   const [phone, setPhone] = useState('');
   const [spokenLanguages, setSpokenLanguages] = useState('');
 
-  // Estados dos campos obrigatórios (Passo 2)
   const [primaryDomain, setPrimaryDomain] = useState('');
   const [keySkills, setKeySkills] = useState('');
 
-  // Estados da Foto (Passo 3)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
-  // Estado do CV (Passo 4)
   const [cvFile, setCvFile] = useState<File | null>(null);
 
-  // Estados das Preferências de Trabalho (Passo 5)
   const [workModel, setWorkModel] = useState('');
   const [employmentType, setEmploymentType] = useState('');
 
-  // Mensagem de erro de validação
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
@@ -59,7 +53,6 @@ export default function CandidateOnboarding() {
   const nextStep = () => {
     setErrorMsg('');
 
-    // Validação Passo 1
     if (step === 1) {
       if (
         !country.trim() ||
@@ -75,7 +68,6 @@ export default function CandidateOnboarding() {
       }
     }
 
-    // Validação Passo 2
     if (step === 2) {
       if (!primaryDomain.trim() || !keySkills.trim()) {
         setErrorMsg(getValidationAlert());
@@ -83,7 +75,6 @@ export default function CandidateOnboarding() {
       }
     }
 
-    // Validação Passo 3 (Foto Obrigatória)
     if (step === 3) {
       if (!photoPreview) {
         setErrorMsg(
@@ -95,7 +86,6 @@ export default function CandidateOnboarding() {
       }
     }
 
-    // Validação Passo 4 (CV Obrigatório)
     if (step === 4) {
       if (!cvFile) {
         setErrorMsg(
@@ -107,7 +97,6 @@ export default function CandidateOnboarding() {
       }
     }
 
-    // Validação Passo 5 (Preferências de Trabalho Obrigatórias)
     if (step === 5) {
       if (!workModel || !employmentType) {
         setErrorMsg(getValidationAlert());
@@ -148,12 +137,8 @@ export default function CandidateOnboarding() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans bg-black text-white">
-      
-      {/* Header Topo: Logotipo Original da SkillGap + Indicador de Passo */}
       <div className="w-full max-w-5xl flex items-center justify-between mb-6 z-10">
         <a href={`/?lang=${lang}`} className="flex items-center gap-3">
-          
-          {/* Logotipo Original Exato */}
           <div className="relative w-10 h-10 flex items-center justify-center rounded-xl bg-purple-950/40 border border-purple-500/40 shadow-lg shadow-purple-900/50 p-1">
             <Image
               src="/images/logo-icon.png"
@@ -177,10 +162,7 @@ export default function CandidateOnboarding() {
         </div>
       </div>
 
-      {/* Card do Onboarding */}
       <div className="w-full max-w-xl border rounded-2xl shadow-2xl p-8 backdrop-blur-xl relative bg-neutral-950/90 border-purple-500/30 shadow-purple-900/20">
-        
-        {/* Barra de Progresso */}
         <div className="w-full h-2 rounded-full mb-6 overflow-hidden bg-neutral-800">
           <div
             className="bg-gradient-to-r from-purple-600 to-indigo-500 h-full transition-all duration-300"
@@ -188,14 +170,12 @@ export default function CandidateOnboarding() {
           ></div>
         </div>
 
-        {/* Alerta de Validação */}
         {errorMsg && (
           <div className="mb-5 p-3 rounded-lg bg-red-500/10 border border-red-500/40 text-red-400 text-xs font-medium">
             ⚠️ {errorMsg}
           </div>
         )}
 
-        {/* PASSO 1: Perfil & Localização */}
         {step === 1 && (
           <div className="space-y-4">
             <div>
@@ -302,7 +282,6 @@ export default function CandidateOnboarding() {
           </div>
         )}
 
-        {/* PASSO 2: Competências & Especialização */}
         {step === 2 && (
           <div className="space-y-4">
             <div>
@@ -336,7 +315,6 @@ export default function CandidateOnboarding() {
           </div>
         )}
 
-        {/* PASSO 3: Fotografia & Identidade */}
         {step === 3 && (
           <div className="space-y-6 text-center">
             <div>
@@ -372,7 +350,6 @@ export default function CandidateOnboarding() {
           </div>
         )}
 
-        {/* PASSO 4: Currículo Obrigatório */}
         {step === 4 && (
           <div className="space-y-4">
             <div>
@@ -394,7 +371,6 @@ export default function CandidateOnboarding() {
           </div>
         )}
 
-        {/* PASSO 5: Preferências de Trabalho */}
         {step === 5 && (
           <div className="space-y-5">
             <div>
@@ -469,7 +445,6 @@ export default function CandidateOnboarding() {
           </div>
         )}
 
-        {/* Botões de Navegação */}
         <div className="flex items-center justify-between mt-8 pt-4 border-t border-neutral-800/60">
           {step > 1 ? (
             <button
@@ -493,5 +468,13 @@ export default function CandidateOnboarding() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CandidateOnboarding() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black text-white flex items-center justify-center">Loading...</div>}>
+      <CandidateOnboardingContent />
+    </Suspense>
   );
 }
