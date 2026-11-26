@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Briefcase,
   Plus,
@@ -38,6 +38,10 @@ const EXPERIENCE_TEXTS: Record<string, any> = {
     cancelBtn: "Cancel",
     saveBtn: "Save Experience",
     savingBtn: "Saving...",
+    deleteBtn: "Delete",
+    sessionError: "Session not found. Please sign in again.",
+    saveError: "Could not save experience record: ",
+    deleteError: "Could not delete experience record: ",
     aiTipTitle: "SkillGap AI Experience Insight",
     aiTipText: "Clear descriptions of your roles and responsibilities help recruiters and AI matching evaluate your practical fit."
   },
@@ -57,6 +61,10 @@ const EXPERIENCE_TEXTS: Record<string, any> = {
     cancelBtn: "Cancelar",
     saveBtn: "Guardar Experiência",
     savingBtn: "A guardar...",
+    deleteBtn: "Apagar",
+    sessionError: "Sessão não encontrada. Inicia sessão novamente.",
+    saveError: "Não foi possível guardar a experiência: ",
+    deleteError: "Não foi possível apagar a experiência: ",
     aiTipTitle: "Insight de Experiência IA SkillGap",
     aiTipText: "Descrições claras das tuas funções e resultados ajudam recrutadores e a IA a avaliar o teu enquadramento prático."
   },
@@ -76,6 +84,10 @@ const EXPERIENCE_TEXTS: Record<string, any> = {
     cancelBtn: "Cancelar",
     saveBtn: "Guardar Experiencia",
     savingBtn: "Guardando...",
+    deleteBtn: "Eliminar",
+    sessionError: "Sesión no encontrada. Vuelve a iniciar sesión.",
+    saveError: "No se pudo guardar la experiencia: ",
+    deleteError: "No se pudo eliminar la experiencia: ",
     aiTipTitle: "Perspectiva de Experiencia IA SkillGap",
     aiTipText: "Las descripciones claras de tus funciones ayudan a reclutadores y a la IA a evaluar tu encaje práctico."
   },
@@ -95,6 +107,10 @@ const EXPERIENCE_TEXTS: Record<string, any> = {
     cancelBtn: "Annuler",
     saveBtn: "Enregistrer",
     savingBtn: "Enregistrement...",
+    deleteBtn: "Supprimer",
+    sessionError: "Session introuvable. Veuillez vous reconnecter.",
+    saveError: "Impossible d'enregistrer l'expérience : ",
+    deleteError: "Impossible de supprimer l'expérience : ",
     aiTipTitle: "Aperçu de l'Expérience IA SkillGap",
     aiTipText: "Des descriptions précises de vos missions aident les recruteurs et l'IA à évaluer votre adéquation concrète."
   },
@@ -114,6 +130,10 @@ const EXPERIENCE_TEXTS: Record<string, any> = {
     cancelBtn: "Abbrechen",
     saveBtn: "Erfahrung speichern",
     savingBtn: "Speichern...",
+    deleteBtn: "Löschen",
+    sessionError: "Sitzung nicht gefunden. Bitte erneut anmelden.",
+    saveError: "Erfahrung konnte nicht gespeichert werden: ",
+    deleteError: "Erfahrung konnte nicht gelöscht werden: ",
     aiTipTitle: "SkillGap KI-Erfahrungseinblick",
     aiTipText: "Klare Beschreibungen Ihrer Aufgaben helfen Recruitern und der KI, Ihre praktische Passung einzuschätzen."
   },
@@ -133,6 +153,10 @@ const EXPERIENCE_TEXTS: Record<string, any> = {
     cancelBtn: "إلغاء",
     saveBtn: "حفظ الخبرة",
     savingBtn: "جاري الحفظ...",
+    deleteBtn: "حذف",
+    sessionError: "لم يتم العثور على الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+    saveError: "تعذر حفظ الخبرة: ",
+    deleteError: "تعذر حذف الخبرة: ",
     aiTipTitle: "رؤية الخبرة بالذكاء الاصطناعي SkillGap",
     aiTipText: "يساعد الوصف الواضح لمهامك وإنجازاتك أصحاب العمل والذكاء الاصطناعي على تقييم ملاءمتك العملية."
   }
@@ -146,6 +170,8 @@ export default function CandidateExperiencePage() {
   const [items, setItems] = useState<ExperienceRecord[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [roleTitle, setRoleTitle] = useState('');
   const [organization, setOrganization] = useState('');
@@ -153,21 +179,30 @@ export default function CandidateExperiencePage() {
   const [description, setDescription] = useState('');
   const [isCurrent, setIsCurrent] = useState(false);
 
-  const loadExperience = async (uid: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('candidate_experience')
-        .select('*')
-        .eq('user_id', uid)
-        .order('created_at', { ascending: false });
+  const resolveUserId = useCallback(async (): Promise<string | null> => {
+    if (userId) return userId;
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user?.id) return null;
+    setUserId(data.user.id);
+    return data.user.id;
+  }, [userId]);
 
-      if (!error && Array.isArray(data)) {
-        setItems(data as ExperienceRecord[]);
-      }
-    } catch {
-      setItems([]);
+  const loadExperience = useCallback(async (uid: string) => {
+    const { data, error } = await supabase
+      .from('candidate_experience')
+      .select('id, role_title, organization, period, description, is_current')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      setErrorMsg(`${ex.saveError}${error.message}`);
+      return;
     }
-  };
+
+    if (Array.isArray(data)) {
+      setItems(data as ExperienceRecord[]);
+    }
+  }, [ex.saveError]);
 
   useEffect(() => {
     let active = true;
@@ -181,28 +216,40 @@ export default function CandidateExperiencePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadExperience]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userId || !roleTitle.trim() || !organization.trim()) return;
+    setErrorMsg(null);
+
+    const uid = await resolveUserId();
+    if (!uid) {
+      setErrorMsg(ex.sessionError);
+      return;
+    }
+    if (!roleTitle.trim() || !organization.trim()) return;
 
     setSaving(true);
     try {
       const { data, error } = await supabase
         .from('candidate_experience')
         .insert({
-          user_id: userId,
+          user_id: uid,
           role_title: roleTitle.trim(),
           organization: organization.trim(),
           period: period.trim(),
           description: description.trim(),
           is_current: isCurrent,
         })
-        .select()
+        .select('id, role_title, organization, period, description, is_current')
         .single();
 
-      if (!error && data) {
+      if (error) {
+        setErrorMsg(`${ex.saveError}${error.message}`);
+        return;
+      }
+
+      if (data) {
         setItems((prev) => [data as ExperienceRecord, ...prev]);
         setRoleTitle('');
         setOrganization('');
@@ -211,21 +258,39 @@ export default function CandidateExperiencePage() {
         setIsCurrent(false);
         setShowForm(false);
       }
+    } catch (err: any) {
+      setErrorMsg(`${ex.saveError}${err?.message || 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!userId) return;
-    const { error } = await supabase
-      .from('candidate_experience')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+    setErrorMsg(null);
+    const uid = await resolveUserId();
+    if (!uid) {
+      setErrorMsg(ex.sessionError);
+      return;
+    }
 
-    if (!error) {
+    setDeletingId(id);
+    try {
+      const { error } = await supabase
+        .from('candidate_experience')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', uid);
+
+      if (error) {
+        setErrorMsg(`${ex.deleteError}${error.message}`);
+        return;
+      }
+
       setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (err: any) {
+      setErrorMsg(`${ex.deleteError}${err?.message || 'Unknown error'}`);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -241,7 +306,10 @@ export default function CandidateExperiencePage() {
         <div>
           <button
             type="button"
-            onClick={() => setShowForm((v) => !v)}
+            onClick={() => {
+              setErrorMsg(null);
+              setShowForm((v) => !v);
+            }}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium text-xs shadow-lg shadow-purple-600/25 hover:shadow-purple-600/40 transition flex items-center gap-2 cursor-pointer"
           >
             {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -249,6 +317,12 @@ export default function CandidateExperiencePage() {
           </button>
         </div>
       </div>
+
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-red-950/50 border border-red-500/40 text-red-300 text-xs font-medium">
+          {errorMsg}
+        </div>
+      )}
 
       {showForm && (
         <form
@@ -374,8 +448,11 @@ export default function CandidateExperiencePage() {
               <div className="flex items-center gap-2 self-end md:self-center">
                 <button
                   type="button"
+                  aria-label={ex.deleteBtn}
+                  title={ex.deleteBtn}
+                  disabled={deletingId === item.id}
                   onClick={() => handleDelete(item.id)}
-                  className="p-2 rounded-xl bg-red-950/30 border border-red-500/20 text-red-400 hover:text-red-300 transition cursor-pointer"
+                  className="p-2 rounded-xl bg-red-950/30 border border-red-500/20 text-red-400 hover:text-red-300 transition cursor-pointer disabled:opacity-50"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

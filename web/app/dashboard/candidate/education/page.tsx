@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   GraduationCap,
   Plus,
@@ -41,6 +41,10 @@ const EDUCATION_TEXTS: Record<string, any> = {
     cancelBtn: "Cancel",
     saveBtn: "Save Entry",
     savingBtn: "Saving...",
+    deleteBtn: "Delete",
+    sessionError: "Session not found. Please sign in again.",
+    saveError: "Could not save education record: ",
+    deleteError: "Could not delete education record: ",
     aiTipTitle: "SkillGap AI Education Insight",
     aiTipText: "Keep your degrees and technical certifications up to date so matching scores reflect your real academic background."
   },
@@ -61,6 +65,10 @@ const EDUCATION_TEXTS: Record<string, any> = {
     cancelBtn: "Cancelar",
     saveBtn: "Guardar Registo",
     savingBtn: "A guardar...",
+    deleteBtn: "Apagar",
+    sessionError: "Sessão não encontrada. Inicia sessão novamente.",
+    saveError: "Não foi possível guardar o registo de educação: ",
+    deleteError: "Não foi possível apagar o registo de educação: ",
     aiTipTitle: "Insight de Educação IA SkillGap",
     aiTipText: "Mantém os teus graus e certificações atualizados para que a pontuação de compatibilidade reflita a tua formação real."
   },
@@ -81,6 +89,10 @@ const EDUCATION_TEXTS: Record<string, any> = {
     cancelBtn: "Cancelar",
     saveBtn: "Guardar Registro",
     savingBtn: "Guardando...",
+    deleteBtn: "Eliminar",
+    sessionError: "Sesión no encontrada. Vuelve a iniciar sesión.",
+    saveError: "No se pudo guardar el registro educativo: ",
+    deleteError: "No se pudo eliminar el registro educativo: ",
     aiTipTitle: "Perspectiva de Educación IA SkillGap",
     aiTipText: "Mantén tus títulos y certificaciones al día para que el cálculo de coincidencia refleje tu formación real."
   },
@@ -101,6 +113,10 @@ const EDUCATION_TEXTS: Record<string, any> = {
     cancelBtn: "Annuler",
     saveBtn: "Enregistrer",
     savingBtn: "Enregistrement...",
+    deleteBtn: "Supprimer",
+    sessionError: "Session introuvable. Veuillez vous reconnecter.",
+    saveError: "Impossible d'enregistrer la formation : ",
+    deleteError: "Impossible de supprimer la formation : ",
     aiTipTitle: "Aperçu de l'Éducation IA SkillGap",
     aiTipText: "Maintenez vos diplômes et certifications à jour afin que le score de correspondance reflète votre parcours réel."
   },
@@ -121,6 +137,10 @@ const EDUCATION_TEXTS: Record<string, any> = {
     cancelBtn: "Abbrechen",
     saveBtn: "Eintrag speichern",
     savingBtn: "Speichern...",
+    deleteBtn: "Löschen",
+    sessionError: "Sitzung nicht gefunden. Bitte erneut anmelden.",
+    saveError: "Bildungseintrag konnte nicht gespeichert werden: ",
+    deleteError: "Bildungseintrag konnte nicht gelöscht werden: ",
     aiTipTitle: "SkillGap KI-Bildungseinblick",
     aiTipText: "Halten Sie Abschlüsse und Zertifikate aktuell, damit die Matching-Bewertung Ihren tatsächlichen Hintergrund abbildet."
   },
@@ -141,6 +161,10 @@ const EDUCATION_TEXTS: Record<string, any> = {
     cancelBtn: "إلغاء",
     saveBtn: "حفظ السجل",
     savingBtn: "جاري الحفظ...",
+    deleteBtn: "حذف",
+    sessionError: "لم يتم العثور على الجلسة. يرجى تسجيل الدخول مرة أخرى.",
+    saveError: "تعذر حفظ سجل التعليم: ",
+    deleteError: "تعذر حذف سجل التعليم: ",
     aiTipTitle: "رؤية التعليم بالذكاء الاصطناعي SkillGap",
     aiTipText: "حافظ على تحديث شهاداتك واعتماداتك ليعكس التطابق الوظيفي مؤهلاتك الفعلية."
   }
@@ -154,6 +178,8 @@ export default function CandidateEducationPage() {
   const [items, setItems] = useState<EducationRecord[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [title, setTitle] = useState('');
   const [institution, setInstitution] = useState('');
@@ -161,21 +187,30 @@ export default function CandidateEducationPage() {
   const [credentialType, setCredentialType] = useState('');
   const [status, setStatus] = useState<'completed' | 'in_progress'>('completed');
 
-  const loadEducation = async (uid: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('candidate_education')
-        .select('*')
-        .eq('user_id', uid)
-        .order('created_at', { ascending: false });
+  const resolveUserId = useCallback(async (): Promise<string | null> => {
+    if (userId) return userId;
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user?.id) return null;
+    setUserId(data.user.id);
+    return data.user.id;
+  }, [userId]);
 
-      if (!error && Array.isArray(data)) {
-        setItems(data as EducationRecord[]);
-      }
-    } catch {
-      setItems([]);
+  const loadEducation = useCallback(async (uid: string) => {
+    const { data, error } = await supabase
+      .from('candidate_education')
+      .select('id, title, institution, period_or_location, credential_type, status')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      setErrorMsg(`${ed.saveError}${error.message}`);
+      return;
     }
-  };
+
+    if (Array.isArray(data)) {
+      setItems(data as EducationRecord[]);
+    }
+  }, [ed.saveError]);
 
   useEffect(() => {
     let active = true;
@@ -189,28 +224,40 @@ export default function CandidateEducationPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadEducation]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userId || !title.trim() || !institution.trim()) return;
+    setErrorMsg(null);
+
+    const uid = await resolveUserId();
+    if (!uid) {
+      setErrorMsg(ed.sessionError);
+      return;
+    }
+    if (!title.trim() || !institution.trim()) return;
 
     setSaving(true);
     try {
       const { data, error } = await supabase
         .from('candidate_education')
         .insert({
-          user_id: userId,
+          user_id: uid,
           title: title.trim(),
           institution: institution.trim(),
           period_or_location: meta.trim(),
           credential_type: credentialType.trim(),
           status,
         })
-        .select()
+        .select('id, title, institution, period_or_location, credential_type, status')
         .single();
 
-      if (!error && data) {
+      if (error) {
+        setErrorMsg(`${ed.saveError}${error.message}`);
+        return;
+      }
+
+      if (data) {
         setItems((prev) => [data as EducationRecord, ...prev]);
         setTitle('');
         setInstitution('');
@@ -219,21 +266,39 @@ export default function CandidateEducationPage() {
         setStatus('completed');
         setShowForm(false);
       }
+    } catch (err: any) {
+      setErrorMsg(`${ed.saveError}${err?.message || 'Unknown error'}`);
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!userId) return;
-    const { error } = await supabase
-      .from('candidate_education')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', userId);
+    setErrorMsg(null);
+    const uid = await resolveUserId();
+    if (!uid) {
+      setErrorMsg(ed.sessionError);
+      return;
+    }
 
-    if (!error) {
+    setDeletingId(id);
+    try {
+      const { error } = await supabase
+        .from('candidate_education')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', uid);
+
+      if (error) {
+        setErrorMsg(`${ed.deleteError}${error.message}`);
+        return;
+      }
+
       setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (err: any) {
+      setErrorMsg(`${ed.deleteError}${err?.message || 'Unknown error'}`);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -249,7 +314,10 @@ export default function CandidateEducationPage() {
         <div>
           <button
             type="button"
-            onClick={() => setShowForm((v) => !v)}
+            onClick={() => {
+              setErrorMsg(null);
+              setShowForm((v) => !v);
+            }}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-medium text-xs shadow-lg shadow-purple-600/25 hover:shadow-purple-600/40 transition flex items-center gap-2 cursor-pointer"
           >
             {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -257,6 +325,12 @@ export default function CandidateEducationPage() {
           </button>
         </div>
       </div>
+
+      {errorMsg && (
+        <div className="p-4 rounded-xl bg-red-950/50 border border-red-500/40 text-red-300 text-xs font-medium">
+          {errorMsg}
+        </div>
+      )}
 
       {showForm && (
         <form
@@ -392,8 +466,11 @@ export default function CandidateEducationPage() {
                 <div className="flex items-center gap-2 self-end md:self-center">
                   <button
                     type="button"
+                    aria-label={ed.deleteBtn}
+                    title={ed.deleteBtn}
+                    disabled={deletingId === item.id}
                     onClick={() => handleDelete(item.id)}
-                    className="p-2 rounded-xl bg-red-950/30 border border-red-500/20 text-red-400 hover:text-red-300 transition cursor-pointer"
+                    className="p-2 rounded-xl bg-red-950/30 border border-red-500/20 text-red-400 hover:text-red-300 transition cursor-pointer disabled:opacity-50"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
