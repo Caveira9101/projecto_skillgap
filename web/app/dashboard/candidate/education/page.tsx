@@ -239,11 +239,13 @@ export default function CandidateEducationPage() {
 
     setSaving(true);
     try {
+      const cleanTitle = title.trim();
       const { data, error } = await supabase
         .from('candidate_education')
         .insert({
           user_id: uid,
-          title: title.trim(),
+          course_degree: cleanTitle,
+          title: cleanTitle,
           institution: institution.trim(),
           period_or_location: meta.trim(),
           credential_type: credentialType.trim(),

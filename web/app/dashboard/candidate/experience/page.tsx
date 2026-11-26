@@ -231,12 +231,14 @@ export default function CandidateExperiencePage() {
 
     setSaving(true);
     try {
+      const cleanOrg = organization.trim();
       const { data, error } = await supabase
         .from('candidate_experience')
         .insert({
           user_id: uid,
+          company_name: cleanOrg,
           role_title: roleTitle.trim(),
-          organization: organization.trim(),
+          organization: cleanOrg,
           period: period.trim(),
           description: description.trim(),
           is_current: isCurrent,
