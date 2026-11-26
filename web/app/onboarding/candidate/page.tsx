@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { getTranslation } from '@/lib/translations';
+import { supabase } from '@/lib/business-supabase';
 
 function CandidateOnboardingContent() {
   const searchParams = useSearchParams();
@@ -50,7 +51,7 @@ function CandidateOnboardingContent() {
     return 'Please fill in all required fields (*) before continuing.';
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
     setErrorMsg('');
 
     if (step === 1) {
@@ -102,6 +103,45 @@ function CandidateOnboardingContent() {
         setErrorMsg(getValidationAlert());
         return;
       }
+
+      if (supabase) {
+        const {
+          data: { user }
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const skillsArray = keySkills
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+          const langsArray = spokenLanguages
+            .split(',')
+            .map((l) => l.trim())
+            .filter(Boolean);
+
+          await supabase.from('candidates').upsert(
+            {
+              user_id: user.id,
+              full_name: user.user_metadata?.full_name || email.split('@')[0],
+              role: primaryDomain.trim(),
+              location: [city.trim(), country.trim()].filter(Boolean).join(', '),
+              languages: langsArray,
+              skills: skillsArray,
+              availability: `${workModel} • ${employmentType}`,
+              onboarding_completed: true
+            },
+            { onConflict: 'user_id' }
+          );
+
+          await supabase.auth.updateUser({
+            data: {
+              onboarding_completed: true,
+              preferred_lang: lang
+            }
+          });
+        }
+      }
+
       window.location.href = `/dashboard/candidate?lang=${lang}`;
       return;
     }

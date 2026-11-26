@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { supabase } from '@/lib/business-supabase';
 
 const businessTranslations: Record<string, any> = {
   en: {
@@ -225,11 +226,49 @@ function BusinessOnboardingContent() {
 
   const handlePrev = () => setStep((prev) => Math.max(prev - 1, 1));
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.roleTitle.trim() || !formData.coreSkills.trim()) {
       alert(t.errorMsg);
       return;
     }
+
+    if (supabase) {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const skillsArray = formData.coreSkills
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+
+        await supabase.from('companies').upsert(
+          {
+            owner_id: user.id,
+            name: formData.companyName.trim(),
+            industry: formData.industry.trim(),
+            onboarding_completed: true
+          },
+          { onConflict: 'owner_id' }
+        );
+
+        await supabase.from('job_positions').insert({
+          company_user_id: user.id,
+          title: formData.roleTitle.trim(),
+          required_skills: skillsArray,
+          status: 'open'
+        });
+
+        await supabase.auth.updateUser({
+          data: {
+            onboarding_completed: true,
+            preferred_lang: langParam
+          }
+        });
+      }
+    }
+
     router.push(`/dashboard/business?lang=${langParam}`);
   };
 

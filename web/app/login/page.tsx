@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, Globe, ArrowRight, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { supabase, type LangCode } from '@/lib/business-supabase';
+import { resolvePostAuthRoute } from '@/lib/onboarding-flow';
 
 const SIX_LANGUAGES: { code: LangCode; label: string }[] = [
   { code: 'en', label: 'EN' },
@@ -201,8 +202,13 @@ function LoginFormContent() {
         return;
       }
 
-      const role = data.user?.user_metadata?.role || 'business';
-      router.push(role === 'candidate' ? '/dashboard/candidate' : '/dashboard/business');
+      if (!data.user) {
+        setErrorMsg('Unable to load user session.');
+        return;
+      }
+
+      const destination = await resolvePostAuthRoute(data.user, lang);
+      router.push(destination);
     } finally {
       setLoading(false);
     }

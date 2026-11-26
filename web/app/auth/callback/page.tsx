@@ -1,20 +1,30 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/business-supabase';
+import {
+  getUserLang,
+  getUserRole,
+  resolvePostAuthRoute
+} from '@/lib/onboarding-flow';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
   const [message, setMessage] = useState('Verifying your email address...');
 
   useEffect(() => {
+    let cancelled = false;
+
     async function handleCallback() {
       if (!supabase) {
-        setStatus('error');
-        setMessage('Supabase client is not configured.');
+        if (!cancelled) {
+          setStatus('error');
+          setMessage('Supabase client is not configured.');
+        }
         return;
       }
 
@@ -23,57 +33,100 @@ export default function AuthCallbackPage() {
       const errorDesc = url.searchParams.get('error_description');
 
       if (errorDesc) {
-        setStatus('error');
-        setMessage(errorDesc);
+        if (!cancelled) {
+          setStatus('error');
+          setMessage(errorDesc);
+        }
         return;
       }
 
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) {
-          setStatus('error');
-          setMessage(error.message);
+          if (!cancelled) {
+            setStatus('error');
+            setMessage(error.message);
+          }
           return;
         }
       }
 
-      const {
+      let {
         data: { user }
       } = await supabase.auth.getUser();
 
       if (!user) {
-        setStatus('error');
-        setMessage('Unable to verify session. Please sign in again.');
+        await new Promise((resolve) => setTimeout(resolve, 600));
+        const retry = await supabase.auth.getUser();
+        user = retry.data.user;
+      }
+
+      if (!user) {
+        if (!cancelled) {
+          setStatus('error');
+          setMessage('Unable to verify session. Please sign in again.');
+        }
         return;
       }
 
-      const role = user.user_metadata?.role || 'business';
+      const role = getUserRole(user);
+      const lang = getUserLang(user, searchParams.get('lang'));
       const fullName = user.user_metadata?.full_name || '';
       const companyName = user.user_metadata?.company_name || '';
       const industry = user.user_metadata?.industry || '';
+      const targetRole = user.user_metadata?.target_role || '';
+      const location = user.user_metadata?.location || '';
 
-      if (role === 'business' && companyName) {
-        const { data: existing } = await supabase.from('companies').select('id').limit(1);
-        if (!existing || existing.length === 0) {
+      if (role === 'business') {
+        const { data: existingCompany } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+
+        if (!existingCompany && (companyName || fullName)) {
           await supabase.from('companies').insert({
-            name: companyName,
-            industry,
-            website: '',
-            location: ''
+            owner_id: user.id,
+            name: companyName || fullName,
+            industry: industry || null,
+            location: null,
+            onboarding_completed: false
+          });
+        }
+      } else {
+        const { data: existingCandidate } = await supabase
+          .from('candidates')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (!existingCandidate && fullName) {
+          await supabase.from('candidates').insert({
+            user_id: user.id,
+            full_name: fullName,
+            role: targetRole || 'Candidate',
+            location: location || '',
+            onboarding_completed: false
           });
         }
       }
 
-      setStatus('success');
-      setMessage('Email verified! Redirecting to your workspace...');
+      const targetRoute = await resolvePostAuthRoute(user, lang);
 
-      setTimeout(() => {
-        router.replace(role === 'candidate' ? '/dashboard/candidate' : '/dashboard/business');
-      }, 1200);
+      if (!cancelled) {
+        setStatus('success');
+        setMessage('Email verified! Redirecting...');
+        setTimeout(() => {
+          router.replace(targetRoute);
+        }, 900);
+      }
     }
 
     handleCallback();
-  }, [router]);
+    return () => {
+      cancelled = true;
+    };
+  }, [router, searchParams]);
 
   return (
     <div className="min-h-screen bg-[#05020a] text-white flex items-center justify-center p-4">
@@ -90,5 +143,19 @@ export default function AuthCallbackPage() {
         <h1 className="text-lg font-bold text-white">{message}</h1>
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#05020a] text-white flex items-center justify-center">
+          Verifying...
+        </div>
+      }
+    >
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
