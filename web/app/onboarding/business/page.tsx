@@ -17,6 +17,7 @@ const businessTranslations: Record<string, any> = {
     namePlaceholder: "e.g., Horizon Tech Solutions",
     indLabel: "Industry / Sector *",
     indPlaceholder: "e.g., FinTech, EdTech, Energy",
+    logoLabel: "Company Logo (Optional)",
     sizeLabel: "Team & Recruiter Size *",
     sizes: [
       '1–10 employees',
@@ -54,6 +55,7 @@ const businessTranslations: Record<string, any> = {
     namePlaceholder: "ex: Horizon Tech Solutions",
     indLabel: "Setor de Atividade *",
     indPlaceholder: "ex: FinTech, EdTech, Energia",
+    logoLabel: "Logótipo da Empresa (Opcional)",
     sizeLabel: "Dimensão da Equipa & Recrutadores *",
     sizes: [
       '1–10 colaboradores',
@@ -91,6 +93,7 @@ const businessTranslations: Record<string, any> = {
     namePlaceholder: "ej., Horizon Tech",
     indLabel: "Industria / Sector *",
     indPlaceholder: "ej., FinTech, EdTech",
+    logoLabel: "Logotipo de la Empresa (Opcional)",
     sizeLabel: "Tamaño del Equipo y Reclutadores *",
     sizes: [
       '1–10 empleados',
@@ -128,6 +131,7 @@ const businessTranslations: Record<string, any> = {
     namePlaceholder: "ex., Horizon Tech",
     indLabel: "Secteur d'Activité *",
     indPlaceholder: "ex., FinTech, EdTech",
+    logoLabel: "Logo de l'Entreprise (Optionnel)",
     sizeLabel: "Taille de l'Équipe & Recruteurs *",
     sizes: [
       '1–10 employés',
@@ -165,6 +169,7 @@ const businessTranslations: Record<string, any> = {
     namePlaceholder: "z.B. Horizon Tech",
     indLabel: "Branche / Sektor *",
     indPlaceholder: "z.B. FinTech, EdTech",
+    logoLabel: "Unternehmenslogo (Optional)",
     sizeLabel: "Team- & Recruitergröße *",
     sizes: [
       '1–10 Mitarbeiter',
@@ -202,6 +207,8 @@ function BusinessOnboardingContent() {
   const t = businessTranslations[langParam] || businessTranslations['en'];
 
   const [step, setStep] = useState(1);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('');
   const [formData, setFormData] = useState({
     companyName: '',
     industry: '',
@@ -238,6 +245,21 @@ function BusinessOnboardingContent() {
       } = await supabase.auth.getUser();
 
       if (user) {
+        let uploadedLogoUrl = '';
+        if (logoFile && logoFile.type.startsWith('image/')) {
+          const ext = logoFile.name.split('.').pop() || 'png';
+          const path = `${user.id}/logos/${Date.now()}.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from('company-media')
+            .upload(path, logoFile, { upsert: true });
+          if (!upErr) {
+            const {
+              data: { publicUrl }
+            } = supabase.storage.from('company-media').getPublicUrl(path);
+            uploadedLogoUrl = publicUrl;
+          }
+        }
+
         const skillsArray = formData.coreSkills
           .split(',')
           .map((s) => s.trim())
@@ -251,6 +273,21 @@ function BusinessOnboardingContent() {
             onboarding_completed: true
           },
           { onConflict: 'owner_id' }
+        );
+
+        await supabase.from('business_company_profiles').upsert(
+          {
+            user_id: user.id,
+            logo_url: uploadedLogoUrl,
+            profile_data: {
+              officialName: formData.companyName.trim(),
+              commercialName: formData.companyName.trim(),
+              industry: formData.industry.trim(),
+              companySize: formData.companySize
+            },
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'user_id' }
         );
 
         await supabase.from('job_positions').insert({
@@ -342,6 +379,32 @@ function BusinessOnboardingContent() {
                     onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl bg-purple-950/30 border border-purple-500/30 text-white text-sm focus:outline-none focus:border-purple-500 transition"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-purple-300 mb-1.5">{t.logoLabel}</label>
+                  <div className="flex items-center gap-3">
+                    {logoPreview && (
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="w-11 h-11 rounded-xl object-contain bg-white/5 border border-purple-500/30 p-1"
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null;
+                        setLogoFile(f);
+                        if (f) {
+                          setLogoPreview(URL.createObjectURL(f));
+                        } else {
+                          setLogoPreview('');
+                        }
+                      }}
+                      className="text-xs text-purple-200 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600/40 file:text-white hover:file:bg-purple-600/60 cursor-pointer"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-purple-300 mb-1.5">{t.sizeLabel}</label>

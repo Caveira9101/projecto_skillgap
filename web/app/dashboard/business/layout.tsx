@@ -37,6 +37,7 @@ const BUSINESS_TRANSLATIONS: Record<LangCode, any> = {
     nav: {
       findTalent: 'Find Talent',
       overview: 'Overview',
+      companyProfile: 'Company Profile',
       candidates: 'Candidates',
       jobPositions: 'Job Positions',
       interviews: 'Interviews',
@@ -68,6 +69,7 @@ const BUSINESS_TRANSLATIONS: Record<LangCode, any> = {
     nav: {
       findTalent: 'Encontrar Talento',
       overview: 'Visão Geral',
+      companyProfile: 'Perfil da Empresa',
       candidates: 'Candidatos',
       jobPositions: 'Vagas',
       interviews: 'Entrevistas',
@@ -99,6 +101,7 @@ const BUSINESS_TRANSLATIONS: Record<LangCode, any> = {
     nav: {
       findTalent: 'Buscar Talento',
       overview: 'Resumen',
+      companyProfile: 'Perfil de Empresa',
       candidates: 'Candidatos',
       jobPositions: 'Puestos',
       interviews: 'Entrevistas',
@@ -130,6 +133,7 @@ const BUSINESS_TRANSLATIONS: Record<LangCode, any> = {
     nav: {
       findTalent: 'Trouver des Talents',
       overview: "Vue d'ensemble",
+      companyProfile: 'Profil Entreprise',
       candidates: 'Candidats',
       jobPositions: 'Postes',
       interviews: 'Entretiens',
@@ -161,6 +165,7 @@ const BUSINESS_TRANSLATIONS: Record<LangCode, any> = {
     nav: {
       findTalent: 'Talente Finden',
       overview: 'Übersicht',
+      companyProfile: 'Unternehmensprofil',
       candidates: 'Kandidaten',
       jobPositions: 'Stellenpositionen',
       interviews: 'Interviews',
@@ -192,6 +197,7 @@ const BUSINESS_TRANSLATIONS: Record<LangCode, any> = {
     nav: {
       findTalent: 'البحث عن المواهب',
       overview: 'نظرة عامة',
+      companyProfile: 'ملف الشركة',
       candidates: 'المرشحون',
       jobPositions: 'الوظائف الشاغرة',
       interviews: 'المقابلات',
@@ -224,6 +230,7 @@ interface BusinessDashboardContextType {
   setLang: (lang: LangCode) => void;
   t: any;
   companyName: string;
+  companyLogoUrl: string;
   activePlan: B2BPlanConfig | null;
   refreshSubscription: () => Promise<void>;
 }
@@ -233,6 +240,7 @@ const BusinessDashboardContext = createContext<BusinessDashboardContextType>({
   setLang: () => {},
   t: BUSINESS_TRANSLATIONS['en'],
   companyName: '',
+  companyLogoUrl: '',
   activePlan: null,
   refreshSubscription: async () => {}
 });
@@ -252,6 +260,7 @@ export default function BusinessDashboardLayout({ children }: { children: React.
   const [lang, setLang] = useState<LangCode>('en');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [companyName, setCompanyName] = useState<string>('');
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string>('');
   const [activePlan, setActivePlan] = useState<B2BPlanConfig | null>(null);
   const pathname = usePathname();
   const t = BUSINESS_TRANSLATIONS[lang] || BUSINESS_TRANSLATIONS['en'];
@@ -262,20 +271,39 @@ export default function BusinessDashboardLayout({ children }: { children: React.
     setActivePlan(sub.plan);
 
     if (supabase) {
-      const { data } = await supabase.from('companies').select('name').limit(1);
-      if (data?.[0]?.name) {
-        setCompanyName(data[0].name);
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const [compRes, profRes] = await Promise.all([
+          supabase.from('companies').select('name').eq('owner_id', user.id).maybeSingle(),
+          supabase
+            .from('business_company_profiles')
+            .select('logo_url, profile_data')
+            .eq('user_id', user.id)
+            .maybeSingle()
+        ]);
+
+        const profName = profRes.data?.profile_data?.commercialName || profRes.data?.profile_data?.officialName;
+        if (profName) {
+          setCompanyName(profName);
+        } else if (compRes.data?.name) {
+          setCompanyName(compRes.data.name);
+        }
+        setCompanyLogoUrl(profRes.data?.logo_url || '');
       }
     }
   }, []);
 
   useEffect(() => {
     loadWorkspaceData();
-  }, [loadWorkspaceData]);
+  }, [loadWorkspaceData, pathname]);
 
   const primaryNav = [
     { href: '/dashboard/business', label: t.nav.findTalent, icon: Search },
     { href: '/dashboard/business/overview', label: t.nav.overview, icon: LayoutGrid },
+    { href: '/dashboard/business/company-profile', label: t.nav.companyProfile, icon: Building2 },
     { href: '/dashboard/business/candidates', label: t.nav.candidates, icon: Users },
     { href: '/dashboard/business/job-positions', label: t.nav.jobPositions, icon: Briefcase },
     { href: '/dashboard/business/interviews', label: t.nav.interviews, icon: Calendar },
@@ -299,6 +327,7 @@ export default function BusinessDashboardLayout({ children }: { children: React.
         setLang,
         t,
         companyName,
+        companyLogoUrl,
         activePlan,
         refreshSubscription: loadWorkspaceData
       }}
@@ -410,8 +439,16 @@ export default function BusinessDashboardLayout({ children }: { children: React.
           <div className="p-3 border-t border-white/[0.06]">
             <div className="flex items-center justify-between gap-2 px-2.5 py-2 rounded-xl bg-[#0d0718] border border-white/[0.06]">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-[#160d29] border border-purple-500/20 flex items-center justify-center text-gray-300 shrink-0">
-                  <Building2 className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-lg bg-[#160d29] border border-purple-500/20 flex items-center justify-center text-gray-300 shrink-0 overflow-hidden">
+                  {companyLogoUrl ? (
+                    <img
+                      src={companyLogoUrl}
+                      alt={companyName || 'Company Logo'}
+                      className="w-full h-full object-contain p-0.5"
+                    />
+                  ) : (
+                    <Building2 className="w-4 h-4" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-white truncate">
@@ -428,14 +465,33 @@ export default function BusinessDashboardLayout({ children }: { children: React.
         </aside>
 
         <div className="flex-1 flex flex-col min-w-0 bg-[#05020a]">
+          {/* Topo esquerdo com o logotipo da empresa + topo direito com idioma e notificações */}
           <header className="px-6 py-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={() => setMobileMenuOpen(true)}
                 className="lg:hidden p-2 rounded-lg bg-white/5 text-gray-300 hover:text-white"
               >
                 <Menu className="w-5 h-5" />
               </button>
+
+              {companyLogoUrl && (
+                <Link
+                  href="/dashboard/business/company-profile"
+                  className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl bg-[#0d0718] border border-purple-500/30 hover:border-purple-400 transition min-w-0"
+                >
+                  <img
+                    src={companyLogoUrl}
+                    alt={companyName || 'Company Logo'}
+                    className="w-7 h-7 rounded-lg object-contain bg-white/5 shrink-0"
+                  />
+                  {companyName && (
+                    <span className="text-xs font-bold text-white truncate max-w-[180px]">
+                      {companyName}
+                    </span>
+                  )}
+                </Link>
+              )}
             </div>
 
             <div className={`flex items-center gap-3 ${isRtl ? 'mr-auto' : 'ml-auto'}`}>
