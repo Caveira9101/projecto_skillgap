@@ -7,12 +7,10 @@ import {
   Trash2,
   Eye,
   Save,
-  Globe,
   Sparkles,
   CheckCircle2,
   AlertCircle,
   Plus,
-  Edit3,
   Layers,
   Award,
   HeartHandshake,
@@ -249,7 +247,7 @@ const DEFAULT_VISIBILITY: Record<SectionKey, boolean> = {
   social: true
 };
 
-const CULTURE_TAG_SUGGESTIONS = [
+const CULTURE_TAG_KEYS = [
   'Innovation',
   'Collaboration',
   'Flexibility',
@@ -260,9 +258,9 @@ const CULTURE_TAG_SUGGESTIONS = [
   'Teamwork',
   'Accountability',
   'Creativity'
-];
+] as const;
 
-const BENEFIT_OPTIONS: Record<BenefitCategoryKey, string[]> = {
+const BENEFIT_KEYS: Record<BenefitCategoryKey, readonly string[]> = {
   financial: ['Performance Bonus', 'Equity / Stock Options', 'Transport Allowance', 'Meal Allowance'],
   health: ['Private Health Insurance', 'Dental & Vision Care', 'Mental Health Support', 'Wellness Stipend'],
   growth: ['Training Budget', 'Conference Sponsorship', 'Certification Support', 'Language Courses'],
@@ -271,7 +269,57 @@ const BENEFIT_OPTIONS: Record<BenefitCategoryKey, string[]> = {
   additional: ['Relocation Support', 'Parental Leave', 'Laptop & Home Office Kit', 'Team Retreats']
 };
 
-const UI_COPY: Record<LangCode, Record<string, string>> = {
+interface LocalizedCopy {
+  title: string;
+  subtitle: string;
+  saveDraft: string;
+  saving: string;
+  publish: string;
+  unpublish: string;
+  previewTab: string;
+  editTab: string;
+  aiTab: string;
+  strengthTitle: string;
+  published: string;
+  draft: string;
+  verificationStatus: string;
+  completeSections: string;
+  incompleteSections: string;
+  recommendations: string;
+  allSectionsComplete: string;
+  uploadLogo: string;
+  uploadCover: string;
+  companyLogoLabel: string;
+  coverImageLabel: string;
+  removeImage: string;
+  savedSuccess: string;
+  publishedSuccess: string;
+  unpublishedSuccess: string;
+  errorPrefix: string;
+  aiBuilderTitle: string;
+  aiWriterTitle: string;
+  aiTranslateTitle: string;
+  targetFieldLabel: string;
+  polishBtn: string;
+  acceptSuggestion: string;
+  rejectSuggestion: string;
+  translateBtn: string;
+  approveTranslation: string;
+  publicWarning: string;
+  addItem: string;
+  deleteItem: string;
+  confirmDelete: string;
+  publicBadge: string;
+  hiddenBadge: string;
+  sections: Record<SectionKey, string>;
+  fields: Record<string, string>;
+  benefitCategories: Record<BenefitCategoryKey, string>;
+  benefitItems: Record<string, string>;
+  cultureTags: Record<string, string>;
+  hints: Record<SectionKey, string>;
+}
+
+const UI_COPY: Record<LangCode, LocalizedCopy> = {
   en: {
     title: 'Company Profile',
     subtitle: 'Build a complete, credible institutional presentation for candidates before they apply.',
@@ -286,12 +334,14 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     published: 'Published',
     draft: 'Draft',
     verificationStatus: 'Verification Status',
-    missingInfo: 'Missing Information',
     completeSections: 'Completed Sections',
     incompleteSections: 'Incomplete Sections',
     recommendations: 'Recommendations',
+    allSectionsComplete: 'Profile core sections are complete.',
     uploadLogo: 'Upload Company Logo',
     uploadCover: 'Upload Cover Image',
+    companyLogoLabel: 'Company Logo',
+    coverImageLabel: 'Cover Image',
     removeImage: 'Remove Image',
     savedSuccess: 'Company profile saved to Supabase.',
     publishedSuccess: 'Company profile is now live for candidates.',
@@ -300,6 +350,7 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     aiBuilderTitle: 'AI Profile Builder & Completeness Analysis',
     aiWriterTitle: 'AI Writing Assistant (Editable Suggestions Only)',
     aiTranslateTitle: 'AI Translation (Review & Approve Before Applying)',
+    targetFieldLabel: 'Target Field',
     polishBtn: 'Polish & Structure Text',
     acceptSuggestion: 'Accept Suggestion',
     rejectSuggestion: 'Reject',
@@ -308,7 +359,117 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     publicWarning: 'Review the public summary below. Private contact details (phone/internal notes) are never exposed publicly.',
     addItem: 'Add',
     deleteItem: 'Delete',
-    confirmDelete: 'Confirm deletion of this item?'
+    confirmDelete: 'Confirm deletion of this item?',
+    publicBadge: 'Public',
+    hiddenBadge: 'Hidden',
+    sections: {
+      identity: '4.1 Company Identity',
+      about: '4.2 About the Company',
+      culture: '4.3 Company Culture',
+      leadership: '4.4 Leadership & Team',
+      products: '4.5 Products & Services',
+      environment: '4.6 Work Environment',
+      benefits: '4.7 Benefits & Experience',
+      achievements: '4.8 Achievements & Certs',
+      social: '4.9 Social & Sustainability'
+    },
+    fields: {
+      officialName: 'Official Company Name',
+      commercialName: 'Commercial Name',
+      tagline: 'Company Tagline',
+      industry: 'Industry',
+      companyType: 'Company Type',
+      yearFounded: 'Year Founded',
+      companySize: 'Company Size',
+      website: 'Website',
+      officialEmail: 'Official E-mail',
+      businessPhone: 'Business Phone',
+      country: 'Country',
+      provinceState: 'Province/State',
+      city: 'City',
+      physicalAddress: 'Physical Address',
+      overview: 'Company Overview',
+      ourStory: 'Our Story',
+      mission: 'Mission',
+      vision: 'Vision',
+      coreValues: 'Core Values',
+      whatWeDo: 'What We Do',
+      ourImpact: 'Our Impact',
+      workEnvironmentDesc: 'Work Environment',
+      leadershipStyle: 'Leadership Style',
+      teamCollaboration: 'Team Collaboration',
+      diversityInclusion: 'Diversity & Inclusion',
+      professionalGrowth: 'Professional Growth',
+      workLifeBalance: 'Work-Life Balance',
+      learningCulture: 'Learning Culture',
+      innovationCulture: 'Innovation Culture',
+      cultureTags: 'Culture Tags',
+      cultureInPractice: 'Our Culture in Practice',
+      totalEmployees: 'Total Number of Employees',
+      departmentsList: 'Departments',
+      geographicalPresence: 'Geographical Presence',
+      internationalTeams: 'International Teams',
+      orgStructure: 'Organisational Structure',
+      workModel: 'General Work Model',
+      benefitConditions: 'Conditions or Role Restrictions'
+    },
+    benefitCategories: {
+      financial: 'Financial',
+      health: 'Health',
+      growth: 'Growth',
+      flexibility: 'Flexibility',
+      career: 'Career',
+      additional: 'Additional'
+    },
+    benefitItems: {
+      'Performance Bonus': 'Performance Bonus',
+      'Equity / Stock Options': 'Equity / Stock Options',
+      'Transport Allowance': 'Transport Allowance',
+      'Meal Allowance': 'Meal Allowance',
+      'Private Health Insurance': 'Private Health Insurance',
+      'Dental & Vision Care': 'Dental & Vision Care',
+      'Mental Health Support': 'Mental Health Support',
+      'Wellness Stipend': 'Wellness Stipend',
+      'Training Budget': 'Training Budget',
+      'Conference Sponsorship': 'Conference Sponsorship',
+      'Certification Support': 'Certification Support',
+      'Language Courses': 'Language Courses',
+      'Flexible Hours': 'Flexible Hours',
+      'Remote Work Days': 'Remote Work Days',
+      'Compressed Workweek': 'Compressed Workweek',
+      'Paid Sabbatical': 'Paid Sabbatical',
+      'Mentorship Programme': 'Mentorship Programme',
+      'Internal Mobility': 'Internal Mobility',
+      'Leadership Track': 'Leadership Track',
+      'Clear Career Ladder': 'Clear Career Ladder',
+      'Relocation Support': 'Relocation Support',
+      'Parental Leave': 'Parental Leave',
+      'Laptop & Home Office Kit': 'Laptop & Home Office Kit',
+      'Team Retreats': 'Team Retreats'
+    },
+    cultureTags: {
+      Innovation: 'Innovation',
+      Collaboration: 'Collaboration',
+      Flexibility: 'Flexibility',
+      'Professional Growth': 'Professional Growth',
+      Diversity: 'Diversity',
+      'Remote Friendly': 'Remote Friendly',
+      'Continuous Learning': 'Continuous Learning',
+      Teamwork: 'Teamwork',
+      Accountability: 'Accountability',
+      Creativity: 'Creativity'
+    },
+    hints: {
+      identity: 'Add Official Company Name, Industry, and Country.',
+      about: 'Fill Company Overview, Mission, and Vision.',
+      culture: 'Describe Work Environment or select Culture Tags.',
+      leadership: 'Add total employees or a leadership member.',
+      products: 'Add at least one product or service.',
+      environment: 'Confirm work model and upload logo or workspace gallery media.',
+      benefits: 'Select at least one benefit offered to employees.',
+      achievements: 'Add certifications, awards, or milestones.',
+      social: 'Add a community or sustainability initiative.'
+    }
   },
   pt: {
     title: 'Perfil da Empresa',
@@ -324,12 +485,14 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     published: 'Publicado',
     draft: 'Rascunho',
     verificationStatus: 'Estado de Verificação',
-    missingInfo: 'Informações em Falta',
     completeSections: 'Secções Completas',
     incompleteSections: 'Secções Incompletas',
     recommendations: 'Recomendações',
+    allSectionsComplete: 'As secções principais do perfil estão completas.',
     uploadLogo: 'Carregar Logótipo',
     uploadCover: 'Carregar Imagem de Capa',
+    companyLogoLabel: 'Logótipo da Empresa',
+    coverImageLabel: 'Imagem de Capa',
     removeImage: 'Remover Imagem',
     savedSuccess: 'Perfil da empresa guardado no Supabase.',
     publishedSuccess: 'O perfil da empresa está agora público para candidatos.',
@@ -338,6 +501,7 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     aiBuilderTitle: 'Construtor IA de Perfil & Análise de Completude',
     aiWriterTitle: 'Assistente de Escrita IA (Apenas Sugestões Editáveis)',
     aiTranslateTitle: 'Tradução IA (Rever e Aprovar Antes de Aplicar)',
+    targetFieldLabel: 'Campo Alvo',
     polishBtn: 'Melhorar e Organizar Texto',
     acceptSuggestion: 'Aceitar Sugestão',
     rejectSuggestion: 'Rejeitar',
@@ -346,7 +510,117 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     publicWarning: 'Revê o resumo público abaixo. Dados privados não são expostos na versão pública.',
     addItem: 'Adicionar',
     deleteItem: 'Apagar',
-    confirmDelete: 'Confirmar a eliminação deste item?'
+    confirmDelete: 'Confirmar a eliminação deste item?',
+    publicBadge: 'Público',
+    hiddenBadge: 'Oculto',
+    sections: {
+      identity: '4.1 Identidade da Empresa',
+      about: '4.2 Sobre a Empresa',
+      culture: '4.3 Cultura da Empresa',
+      leadership: '4.4 Liderança e Equipa',
+      products: '4.5 Produtos e Serviços',
+      environment: '4.6 Ambiente de Trabalho',
+      benefits: '4.7 Benefícios e Experiência',
+      achievements: '4.8 Conquistas e Certificações',
+      social: '4.9 Responsabilidade Social e Sustentabilidade'
+    },
+    fields: {
+      officialName: 'Nome Oficial da Empresa',
+      commercialName: 'Nome Comercial',
+      tagline: 'Slogan da Empresa',
+      industry: 'Setor de Atividade',
+      companyType: 'Tipo de Empresa',
+      yearFounded: 'Ano de Fundação',
+      companySize: 'Dimensão da Empresa',
+      website: 'Website',
+      officialEmail: 'E-mail Oficial',
+      businessPhone: 'Telefone Corporativo',
+      country: 'País',
+      provinceState: 'Província / Estado',
+      city: 'Cidade',
+      physicalAddress: 'Endereço Físico',
+      overview: 'Visão Geral da Empresa',
+      ourStory: 'A Nossa História',
+      mission: 'Missão',
+      vision: 'Visão',
+      coreValues: 'Valores Fundamentais',
+      whatWeDo: 'O Que Fazemos',
+      ourImpact: 'O Nosso Impacto',
+      workEnvironmentDesc: 'Ambiente de Trabalho',
+      leadershipStyle: 'Estilo de Liderança',
+      teamCollaboration: 'Colaboração em Equipa',
+      diversityInclusion: 'Diversidade e Inclusão',
+      professionalGrowth: 'Crescimento Profissional',
+      workLifeBalance: 'Equilíbrio Vida-Trabalho',
+      learningCulture: 'Cultura de Aprendizagem',
+      innovationCulture: 'Cultura de Inovação',
+      cultureTags: 'Etiquetas de Cultura',
+      cultureInPractice: 'A Nossa Cultura na Prática',
+      totalEmployees: 'Número Total de Colaboradores',
+      departmentsList: 'Departamentos',
+      geographicalPresence: 'Presença Geográfica',
+      internationalTeams: 'Equipas Internacionais',
+      orgStructure: 'Estrutura Organizacional',
+      workModel: 'Modelo Geral de Trabalho',
+      benefitConditions: 'Condições ou Restrições por Função'
+    },
+    benefitCategories: {
+      financial: 'Financeiros',
+      health: 'Saúde',
+      growth: 'Crescimento',
+      flexibility: 'Flexibilidade',
+      career: 'Carreira',
+      additional: 'Adicionais'
+    },
+    benefitItems: {
+      'Performance Bonus': 'Bónus de Desempenho',
+      'Equity / Stock Options': 'Participação / Stock Options',
+      'Transport Allowance': 'Subsídio de Transporte',
+      'Meal Allowance': 'Subsídio de Alimentação',
+      'Private Health Insurance': 'Seguro de Saúde Privado',
+      'Dental & Vision Care': 'Cuidados Dentários e Visão',
+      'Mental Health Support': 'Apoio à Saúde Mental',
+      'Wellness Stipend': 'Subsídio de Bem-Estar',
+      'Training Budget': 'Orçamento de Formação',
+      'Conference Sponsorship': 'Patrocínio a Conferências',
+      'Certification Support': 'Apoio a Certificações',
+      'Language Courses': 'Cursos de Línguas',
+      'Flexible Hours': 'Horário Flexível',
+      'Remote Work Days': 'Dias de Trabalho Remoto',
+      'Compressed Workweek': 'Semana de Trabalho Compactada',
+      'Paid Sabbatical': 'Licença Sabática Remunerada',
+      'Mentorship Programme': 'Programa de Mentoria',
+      'Internal Mobility': 'Mobilidade Interna',
+      'Leadership Track': 'Percurso de Liderança',
+      'Clear Career Ladder': 'Plano de Carreira Claro',
+      'Relocation Support': 'Apoio à Deslocação',
+      'Parental Leave': 'Licença Parental',
+      'Laptop & Home Office Kit': 'Computador e Kit de Home Office',
+      'Team Retreats': 'Encontros de Equipa'
+    },
+    cultureTags: {
+      Innovation: 'Inovação',
+      Collaboration: 'Colaboração',
+      Flexibility: 'Flexibilidade',
+      'Professional Growth': 'Crescimento Profissional',
+      Diversity: 'Diversidade',
+      'Remote Friendly': 'Trabalho Remoto',
+      'Continuous Learning': 'Aprendizagem Contínua',
+      Teamwork: 'Trabalho em Equipa',
+      Accountability: 'Responsabilização',
+      Creativity: 'Criatividade'
+    },
+    hints: {
+      identity: 'Adiciona o Nome Oficial da Empresa, o Setor de Atividade e o País.',
+      about: 'Preenche a Visão Geral, a Missão e a Visão.',
+      culture: 'Descreve o Ambiente de Trabalho ou seleciona Etiquetas de Cultura.',
+      leadership: 'Adiciona o número total de colaboradores ou um membro da liderança.',
+      products: 'Adiciona pelo menos um produto ou serviço.',
+      environment: 'Confirma o modelo de trabalho e carrega o logótipo ou fotos do espaço.',
+      benefits: 'Seleciona pelo menos um benefício oferecido aos colaboradores.',
+      achievements: 'Adiciona certificações, prémios ou marcos.',
+      social: 'Adiciona uma iniciativa comunitária ou de sustentabilidade.'
+    }
   },
   es: {
     title: 'Perfil de Empresa',
@@ -362,12 +636,14 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     published: 'Publicado',
     draft: 'Borrador',
     verificationStatus: 'Estado de Verificación',
-    missingInfo: 'Información Faltante',
     completeSections: 'Secciones Completas',
     incompleteSections: 'Secciones Incompletas',
     recommendations: 'Recomendaciones',
+    allSectionsComplete: 'Las secciones principales del perfil están completas.',
     uploadLogo: 'Subir Logotipo',
     uploadCover: 'Subir Imagen de Portada',
+    companyLogoLabel: 'Logotipo de la Empresa',
+    coverImageLabel: 'Imagen de Portada',
     removeImage: 'Eliminar Imagen',
     savedSuccess: 'Perfil empresarial guardado en Supabase.',
     publishedSuccess: 'El perfil empresarial ya está publicado.',
@@ -376,6 +652,7 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     aiBuilderTitle: 'Constructor IA de Perfil y Análisis',
     aiWriterTitle: 'Asistente de Redacción IA (Sugerencias Editables)',
     aiTranslateTitle: 'Traducción IA (Revisar y Aprobar)',
+    targetFieldLabel: 'Campo Objetivo',
     polishBtn: 'Mejorar y Organizar Texto',
     acceptSuggestion: 'Aceptar Sugerencia',
     rejectSuggestion: 'Rechazar',
@@ -384,7 +661,117 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     publicWarning: 'Revisa el resumen público. La información privada nunca se muestra públicamente.',
     addItem: 'Añadir',
     deleteItem: 'Eliminar',
-    confirmDelete: '¿Confirmar la eliminación de este elemento?'
+    confirmDelete: '¿Confirmar la eliminación de este elemento?',
+    publicBadge: 'Público',
+    hiddenBadge: 'Oculto',
+    sections: {
+      identity: '4.1 Identidad de la Empresa',
+      about: '4.2 Sobre la Empresa',
+      culture: '4.3 Cultura Empresarial',
+      leadership: '4.4 Liderazgo y Equipo',
+      products: '4.5 Productos y Servicios',
+      environment: '4.6 Entorno de Trabajo',
+      benefits: '4.7 Beneficios y Experiencia',
+      achievements: '4.8 Logros y Certificaciones',
+      social: '4.9 Responsabilidad Social y Sostenibilidad'
+    },
+    fields: {
+      officialName: 'Nombre Oficial de la Empresa',
+      commercialName: 'Nombre Comercial',
+      tagline: 'Lema de la Empresa',
+      industry: 'Industria',
+      companyType: 'Tipo de Empresa',
+      yearFounded: 'Año de Fundación',
+      companySize: 'Tamaño de la Empresa',
+      website: 'Sitio Web',
+      officialEmail: 'Correo Oficial',
+      businessPhone: 'Teléfono Corporativo',
+      country: 'País',
+      provinceState: 'Provincia / Estado',
+      city: 'Ciudad',
+      physicalAddress: 'Dirección Física',
+      overview: 'Resumen de la Empresa',
+      ourStory: 'Nuestra Historia',
+      mission: 'Misión',
+      vision: 'Visión',
+      coreValues: 'Valores Fundamentales',
+      whatWeDo: 'Qué Hacemos',
+      ourImpact: 'Nuestro Impacto',
+      workEnvironmentDesc: 'Entorno de Trabajo',
+      leadershipStyle: 'Estilo de Liderazgo',
+      teamCollaboration: 'Colaboración en Equipo',
+      diversityInclusion: 'Diversidad e Inclusión',
+      professionalGrowth: 'Crecimiento Profesional',
+      workLifeBalance: 'Equilibrio Vida-Trabajo',
+      learningCulture: 'Cultura de Aprendizaje',
+      innovationCulture: 'Cultura de Innovación',
+      cultureTags: 'Etiquetas de Cultura',
+      cultureInPractice: 'Nuestra Cultura en la Práctica',
+      totalEmployees: 'Número Total de Empleados',
+      departmentsList: 'Departamentos',
+      geographicalPresence: 'Presencia Geográfica',
+      internationalTeams: 'Equipos Internacionales',
+      orgStructure: 'Estructura Organizativa',
+      workModel: 'Modelo General de Trabajo',
+      benefitConditions: 'Condiciones o Restricciones por Puesto'
+    },
+    benefitCategories: {
+      financial: 'Financieros',
+      health: 'Salud',
+      growth: 'Crecimiento',
+      flexibility: 'Flexibilidad',
+      career: 'Carrera',
+      additional: 'Adicionales'
+    },
+    benefitItems: {
+      'Performance Bonus': 'Bono por Desempeño',
+      'Equity / Stock Options': 'Participación / Stock Options',
+      'Transport Allowance': 'Auxilio de Transporte',
+      'Meal Allowance': 'Auxilio de Alimentación',
+      'Private Health Insurance': 'Seguro Médico Privado',
+      'Dental & Vision Care': 'Salud Dental y Visual',
+      'Mental Health Support': 'Apoyo de Salud Mental',
+      'Wellness Stipend': 'Subsidio de Bienestar',
+      'Training Budget': 'Presupuesto de Formación',
+      'Conference Sponsorship': 'Patrocinio de Conferencias',
+      'Certification Support': 'Apoyo a Certificaciones',
+      'Language Courses': 'Cursos de Idiomas',
+      'Flexible Hours': 'Horario Flexible',
+      'Remote Work Days': 'Días de Trabajo Remoto',
+      'Compressed Workweek': 'Semana Laboral Comprimida',
+      'Paid Sabbatical': 'Año Sabático Pagado',
+      'Mentorship Programme': 'Programa de Mentoría',
+      'Internal Mobility': 'Movilidad Interna',
+      'Leadership Track': 'Ruta de Liderazgo',
+      'Clear Career Ladder': 'Plan de Carrera Claro',
+      'Relocation Support': 'Apoyo de Reubicación',
+      'Parental Leave': 'Licencia Parental',
+      'Laptop & Home Office Kit': 'Equipo Portátil y Oficina en Casa',
+      'Team Retreats': 'Encuentros de Equipo'
+    },
+    cultureTags: {
+      Innovation: 'Innovación',
+      Collaboration: 'Colaboración',
+      Flexibility: 'Flexibilidad',
+      'Professional Growth': 'Crecimiento Profesional',
+      Diversity: 'Diversidad',
+      'Remote Friendly': 'Trabajo Remoto',
+      'Continuous Learning': 'Aprendizaje Continuo',
+      Teamwork: 'Trabajo en Equipo',
+      Accountability: 'Responsabilidad',
+      Creativity: 'Creatividad'
+    },
+    hints: {
+      identity: 'Añade Nombre Oficial, Industria y País.',
+      about: 'Completa Resumen, Misión y Visión.',
+      culture: 'Describe el Entorno de Trabajo o selecciona Etiquetas de Cultura.',
+      leadership: 'Añade el total de empleados o un miembro de liderazgo.',
+      products: 'Añade al menos un producto o servicio.',
+      environment: 'Confirma el modelo de trabajo y sube logotipo o galería.',
+      benefits: 'Selecciona al menos un beneficio.',
+      achievements: 'Añade certificaciones, premios o hitos.',
+      social: 'Añade una iniciativa comunitaria o de sostenibilidad.'
+    }
   },
   fr: {
     title: 'Profil Entreprise',
@@ -400,12 +787,14 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     published: 'Publié',
     draft: 'Brouillon',
     verificationStatus: 'Statut de Vérification',
-    missingInfo: 'Informations Manquantes',
     completeSections: 'Sections Complètes',
     incompleteSections: 'Sections Incomplètes',
     recommendations: 'Recommandations',
+    allSectionsComplete: 'Les sections principales du profil sont complètes.',
     uploadLogo: 'Téléverser le Logo',
     uploadCover: 'Téléverser la Couverture',
+    companyLogoLabel: 'Logo de l’Entreprise',
+    coverImageLabel: 'Image de Couverture',
     removeImage: 'Supprimer l’Image',
     savedSuccess: 'Profil entreprise enregistré dans Supabase.',
     publishedSuccess: 'Le profil entreprise est maintenant publié.',
@@ -414,6 +803,7 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     aiBuilderTitle: 'Assistant Profil IA & Complétude',
     aiWriterTitle: 'Assistant Rédaction IA (Suggestions Modifiables)',
     aiTranslateTitle: 'Traduction IA (Vérifier et Approuver)',
+    targetFieldLabel: 'Champ Cible',
     polishBtn: 'Améliorer et Structurer',
     acceptSuggestion: 'Accepter la Suggestion',
     rejectSuggestion: 'Rejeter',
@@ -422,7 +812,117 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     publicWarning: 'Vérifiez le résumé public. Les données privées ne sont jamais affichées publiquement.',
     addItem: 'Ajouter',
     deleteItem: 'Supprimer',
-    confirmDelete: 'Confirmer la suppression de cet élément ?'
+    confirmDelete: 'Confirmer la suppression de cet élément ?',
+    publicBadge: 'Public',
+    hiddenBadge: 'Masqué',
+    sections: {
+      identity: '4.1 Identité de l’Entreprise',
+      about: '4.2 À Propos de l’Entreprise',
+      culture: '4.3 Culture d’Entreprise',
+      leadership: '4.4 Direction et Équipe',
+      products: '4.5 Produits et Services',
+      environment: '4.6 Environnement de Travail',
+      benefits: '4.7 Avantages et Expérience',
+      achievements: '4.8 Réalisations et Certifications',
+      social: '4.9 Responsabilité Sociale et Durabilité'
+    },
+    fields: {
+      officialName: 'Nom Officiel de l’Entreprise',
+      commercialName: 'Nom Commercial',
+      tagline: 'Slogan de l’Entreprise',
+      industry: 'Secteur',
+      companyType: 'Type d’Entreprise',
+      yearFounded: 'Année de Création',
+      companySize: 'Taille de l’Entreprise',
+      website: 'Site Web',
+      officialEmail: 'E-mail Officiel',
+      businessPhone: 'Téléphone Professionnel',
+      country: 'Pays',
+      provinceState: 'Province / État',
+      city: 'Ville',
+      physicalAddress: 'Adresse Physique',
+      overview: 'Présentation Générale',
+      ourStory: 'Notre Histoire',
+      mission: 'Mission',
+      vision: 'Vision',
+      coreValues: 'Valeurs Fondamentales',
+      whatWeDo: 'Ce Que Nous Faisons',
+      ourImpact: 'Notre Impact',
+      workEnvironmentDesc: 'Environnement de Travail',
+      leadershipStyle: 'Style de Direction',
+      teamCollaboration: 'Collaboration d’Équipe',
+      diversityInclusion: 'Diversité et Inclusion',
+      professionalGrowth: 'Croissance Professionnelle',
+      workLifeBalance: 'Équilibre Vie Pro / Vie Perso',
+      learningCulture: 'Culture d’Apprentissage',
+      innovationCulture: 'Culture d’Innovation',
+      cultureTags: 'Tags de Culture',
+      cultureInPractice: 'Notre Culture en Pratique',
+      totalEmployees: 'Nombre Total d’Employés',
+      departmentsList: 'Départements',
+      geographicalPresence: 'Présence Géographique',
+      internationalTeams: 'Équipes Internationales',
+      orgStructure: 'Structure Organisationnelle',
+      workModel: 'Modèle de Travail Général',
+      benefitConditions: 'Conditions ou Restrictions par Poste'
+    },
+    benefitCategories: {
+      financial: 'Financiers',
+      health: 'Santé',
+      growth: 'Développement',
+      flexibility: 'Flexibilité',
+      career: 'Carrière',
+      additional: 'Complémentaires'
+    },
+    benefitItems: {
+      'Performance Bonus': 'Prime de Performance',
+      'Equity / Stock Options': 'Actions / Stock Options',
+      'Transport Allowance': 'Indemnité de Transport',
+      'Meal Allowance': 'Ticket / Indemnité Repas',
+      'Private Health Insurance': 'Mutuelle Santé Privée',
+      'Dental & Vision Care': 'Soins Dentaires et Optiques',
+      'Mental Health Support': 'Soutien Santé Mentale',
+      'Wellness Stipend': 'Allocation Bien-Être',
+      'Training Budget': 'Budget Formation',
+      'Conference Sponsorship': 'Prise en Charge Conférences',
+      'Certification Support': 'Aide aux Certifications',
+      'Language Courses': 'Cours de Langues',
+      'Flexible Hours': 'Horaires Flexibles',
+      'Remote Work Days': 'Télétravail',
+      'Compressed Workweek': 'Semaine Compressée',
+      'Paid Sabbatical': 'Congé Sabbatique Payé',
+      'Mentorship Programme': 'Programme de Mentorat',
+      'Internal Mobility': 'Mobilité Interne',
+      'Leadership Track': 'Parcours Leadership',
+      'Clear Career Ladder': 'Évolution de Carrière Claire',
+      'Relocation Support': 'Aide à la Relocalisation',
+      'Parental Leave': 'Congé Parental',
+      'Laptop & Home Office Kit': 'Ordinateur et Kit Télétravail',
+      'Team Retreats': 'Séminaires d’Équipe'
+    },
+    cultureTags: {
+      Innovation: 'Innovation',
+      Collaboration: 'Collaboration',
+      Flexibility: 'Flexibilité',
+      'Professional Growth': 'Croissance Professionnelle',
+      Diversity: 'Diversité',
+      'Remote Friendly': 'Télétravail',
+      'Continuous Learning': 'Apprentissage Continu',
+      Teamwork: 'Esprit d’Équipe',
+      Accountability: 'Responsabilité',
+      Creativity: 'Créativité'
+    },
+    hints: {
+      identity: 'Ajoutez le Nom Officiel, le Secteur et le Pays.',
+      about: 'Renseignez Présentation, Mission et Vision.',
+      culture: 'Décrivez l’Environnement de Travail ou sélectionnez des Tags.',
+      leadership: 'Ajoutez l’effectif total ou un membre de direction.',
+      products: 'Ajoutez au moins un produit ou service.',
+      environment: 'Confirmez le modèle de travail et ajoutez logo ou galerie.',
+      benefits: 'Sélectionnez au moins un avantage.',
+      achievements: 'Ajoutez certifications, distinctions ou étapes clés.',
+      social: 'Ajoutez une initiative solidaire ou durable.'
+    }
   },
   de: {
     title: 'Unternehmensprofil',
@@ -438,12 +938,14 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     published: 'Veröffentlicht',
     draft: 'Entwurf',
     verificationStatus: 'Verifizierungsstatus',
-    missingInfo: 'Fehlende Informationen',
     completeSections: 'Vollständige Bereiche',
     incompleteSections: 'Unvollständige Bereiche',
     recommendations: 'Empfehlungen',
+    allSectionsComplete: 'Die Kernbereiche des Profils sind vollständig.',
     uploadLogo: 'Logo hochladen',
     uploadCover: 'Titelbild hochladen',
+    companyLogoLabel: 'Unternehmenslogo',
+    coverImageLabel: 'Titelbild',
     removeImage: 'Bild entfernen',
     savedSuccess: 'Unternehmensprofil in Supabase gespeichert.',
     publishedSuccess: 'Das Unternehmensprofil ist jetzt veröffentlicht.',
@@ -452,6 +954,7 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     aiBuilderTitle: 'KI-Profil-Assistent & Vollständigkeit',
     aiWriterTitle: 'KI-Schreibassistent (Nur bearbeitbare Vorschläge)',
     aiTranslateTitle: 'KI-Übersetzung (Prüfen & Freigeben)',
+    targetFieldLabel: 'Zielfeld',
     polishBtn: 'Text verbessern & gliedern',
     acceptSuggestion: 'Vorschlag übernehmen',
     rejectSuggestion: 'Verwerfen',
@@ -460,7 +963,117 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     publicWarning: 'Prüfen Sie die öffentliche Zusammenfassung. Private Daten werden niemals öffentlich angezeigt.',
     addItem: 'Hinzufügen',
     deleteItem: 'Löschen',
-    confirmDelete: 'Diesen Eintrag wirklich löschen?'
+    confirmDelete: 'Diesen Eintrag wirklich löschen?',
+    publicBadge: 'Öffentlich',
+    hiddenBadge: 'Ausgeblendet',
+    sections: {
+      identity: '4.1 Unternehmensidentität',
+      about: '4.2 Über das Unternehmen',
+      culture: '4.3 Unternehmenskultur',
+      leadership: '4.4 Führung & Team',
+      products: '4.5 Produkte & Leistungen',
+      environment: '4.6 Arbeitsumfeld',
+      benefits: '4.7 Benefits & Erfahrung',
+      achievements: '4.8 Erfolge & Zertifikate',
+      social: '4.9 Soziales & Nachhaltigkeit'
+    },
+    fields: {
+      officialName: 'Offizieller Firmenname',
+      commercialName: 'Handelsname',
+      tagline: 'Claim / Slogan',
+      industry: 'Branche',
+      companyType: 'Unternehmensform',
+      yearFounded: 'Gründungsjahr',
+      companySize: 'Unternehmensgröße',
+      website: 'Website',
+      officialEmail: 'Offizielle E-Mail',
+      businessPhone: 'Geschäftstelefon',
+      country: 'Land',
+      provinceState: 'Bundesland / Region',
+      city: 'Stadt',
+      physicalAddress: 'Physische Adresse',
+      overview: 'Unternehmensüberblick',
+      ourStory: 'Unsere Geschichte',
+      mission: 'Mission',
+      vision: 'Vision',
+      coreValues: 'Grundwerte',
+      whatWeDo: 'Was wir tun',
+      ourImpact: 'Unsere Wirkung',
+      workEnvironmentDesc: 'Arbeitsumfeld',
+      leadershipStyle: 'Führungsstil',
+      teamCollaboration: 'Teamzusammenarbeit',
+      diversityInclusion: 'Vielfalt & Inklusion',
+      professionalGrowth: 'Berufliche Entwicklung',
+      workLifeBalance: 'Work-Life-Balance',
+      learningCulture: 'Lernkultur',
+      innovationCulture: 'Innovationskultur',
+      cultureTags: 'Kultur-Tags',
+      cultureInPractice: 'Unsere Kultur in der Praxis',
+      totalEmployees: 'Gesamtzahl der Mitarbeitenden',
+      departmentsList: 'Abteilungen',
+      geographicalPresence: 'Geografische Präsenz',
+      internationalTeams: 'Internationale Teams',
+      orgStructure: 'Organisationsstruktur',
+      workModel: 'Allgemeines Arbeitsmodell',
+      benefitConditions: 'Bedingungen oder Einschränkungen'
+    },
+    benefitCategories: {
+      financial: 'Finanziell',
+      health: 'Gesundheit',
+      growth: 'Weiterbildung',
+      flexibility: 'Flexibilität',
+      career: 'Karriere',
+      additional: 'Zusätzlich'
+    },
+    benefitItems: {
+      'Performance Bonus': 'Leistungsbonus',
+      'Equity / Stock Options': 'Unternehmensanteile / Optionen',
+      'Transport Allowance': 'Fahrtkostenzuschuss',
+      'Meal Allowance': 'Essenszuschuss',
+      'Private Health Insurance': 'Private Krankenversicherung',
+      'Dental & Vision Care': 'Zahn- & Sehvorsorge',
+      'Mental Health Support': 'Mentale Gesundheitsunterstützung',
+      'Wellness Stipend': 'Wellness-Budget',
+      'Training Budget': 'Weiterbildungsbudget',
+      'Conference Sponsorship': 'Konferenzförderung',
+      'Certification Support': 'Zertifizierungsförderung',
+      'Language Courses': 'Sprachkurse',
+      'Flexible Hours': 'Flexible Arbeitszeiten',
+      'Remote Work Days': 'Remote-Arbeitstage',
+      'Compressed Workweek': 'Komprimierte Arbeitswoche',
+      'Paid Sabbatical': 'Bezahltes Sabbatical',
+      'Mentorship Programme': 'Mentoring-Programm',
+      'Internal Mobility': 'Interne Mobilität',
+      'Leadership Track': 'Führungslaufbahn',
+      'Clear Career Ladder': 'Klare Karriereleiter',
+      'Relocation Support': 'Umzugsunterstützung',
+      'Parental Leave': 'Elternzeit',
+      'Laptop & Home Office Kit': 'Laptop & Home-Office-Ausstattung',
+      'Team Retreats': 'Team-Events'
+    },
+    cultureTags: {
+      Innovation: 'Innovation',
+      Collaboration: 'Zusammenarbeit',
+      Flexibility: 'Flexibilität',
+      'Professional Growth': 'Berufliche Entwicklung',
+      Diversity: 'Vielfalt',
+      'Remote Friendly': 'Remote-freundlich',
+      'Continuous Learning': 'Kontinuierliches Lernen',
+      Teamwork: 'Teamarbeit',
+      Accountability: 'Verantwortung',
+      Creativity: 'Kreativität'
+    },
+    hints: {
+      identity: 'Offiziellen Namen, Branche und Land ergänzen.',
+      about: 'Überblick, Mission und Vision ausfüllen.',
+      culture: 'Arbeitsumfeld beschreiben oder Kultur-Tags wählen.',
+      leadership: 'Mitarbeitendenzahl oder Führungskraft angeben.',
+      products: 'Mindestens ein Produkt oder eine Leistung hinzufügen.',
+      environment: 'Arbeitsmodell bestätigen und Logo oder Galerie hochladen.',
+      benefits: 'Mindestens einen Benefit auswählen.',
+      achievements: 'Zertifikate, Auszeichnungen oder Meilensteine hinzufügen.',
+      social: 'Gemeinschafts- oder Nachhaltigkeitsinitiative hinzufügen.'
+    }
   },
   ar: {
     title: 'ملف الشركة',
@@ -476,12 +1089,14 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     published: 'منشور',
     draft: 'مسودة',
     verificationStatus: 'حالة التحقق',
-    missingInfo: 'معلومات ناقصة',
     completeSections: 'الأقسام المكتملة',
     incompleteSections: 'الأقسام غير المكتملة',
     recommendations: 'التوصيات',
+    allSectionsComplete: 'الأقسام الأساسية للملف مكتملة.',
     uploadLogo: 'رفع الشعار',
     uploadCover: 'رفع صورة الغلاف',
+    companyLogoLabel: 'شعار الشركة',
+    coverImageLabel: 'صورة الغلاف',
     removeImage: 'إزالة الصورة',
     savedSuccess: 'تم حفظ ملف الشركة في Supabase.',
     publishedSuccess: 'أصبح ملف الشركة متاحاً للعامة.',
@@ -490,6 +1105,7 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     aiBuilderTitle: 'منشئ الملف بالذكاء الاصطناعي وتحليل الاكتمال',
     aiWriterTitle: 'مساعد الكتابة بالذكاء الاصطناعي (اقتراحات قابلة للتعديل)',
     aiTranslateTitle: 'الترجمة بالذكاء الاصطناعي (مراجعة واعتماد)',
+    targetFieldLabel: 'الحقل المستهدف',
     polishBtn: 'تحسين وتنظيم النص',
     acceptSuggestion: 'قبول الاقتراح',
     rejectSuggestion: 'رفض',
@@ -498,7 +1114,117 @@ const UI_COPY: Record<LangCode, Record<string, string>> = {
     publicWarning: 'راجع الملخص العام. لا يتم عرض البيانات الخاصة للعامة أبداً.',
     addItem: 'إضافة',
     deleteItem: 'حذف',
-    confirmDelete: 'تأكيد حذف هذا العنصر؟'
+    confirmDelete: 'تأكيد حذف هذا العنصر؟',
+    publicBadge: 'عام',
+    hiddenBadge: 'مخفي',
+    sections: {
+      identity: '4.1 هوية الشركة',
+      about: '4.2 عن الشركة',
+      culture: '4.3 ثقافة الشركة',
+      leadership: '4.4 القيادة والفريق',
+      products: '4.5 المنتجات والخدمات',
+      environment: '4.6 بيئة العمل',
+      benefits: '4.7 المزايا وتجربة الموظف',
+      achievements: '4.8 الإنجازات والشهادات',
+      social: '4.9 المسؤولية الاجتماعية والاستدامة'
+    },
+    fields: {
+      officialName: 'الاسم الرسمي للشركة',
+      commercialName: 'الاسم التجاري',
+      tagline: 'الشعار اللفظي للشركة',
+      industry: 'القطاع',
+      companyType: 'نوع الشركة',
+      yearFounded: 'سنة التأسيس',
+      companySize: 'حجم الشركة',
+      website: 'الموقع الإلكتروني',
+      officialEmail: 'البريد الإلكتروني الرسمي',
+      businessPhone: 'هاتف العمل',
+      country: 'الدولة',
+      provinceState: 'المنطقة / الولاية',
+      city: 'المدينة',
+      physicalAddress: 'العنوان الفعلي',
+      overview: 'نظرة عامة على الشركة',
+      ourStory: 'قصتنا',
+      mission: 'الرسالة',
+      vision: 'الرؤية',
+      coreValues: 'القيم الجوهرية',
+      whatWeDo: 'ماذا نقدم',
+      ourImpact: 'أثرنا',
+      workEnvironmentDesc: 'بيئة العمل',
+      leadershipStyle: 'أسلوب القيادة',
+      teamCollaboration: 'التعاون الجماعي',
+      diversityInclusion: 'التنوع والشمول',
+      professionalGrowth: 'النمو المهني',
+      workLifeBalance: 'التوازن بين العمل والحياة',
+      learningCulture: 'ثقافة التعلم',
+      innovationCulture: 'ثقافة الابتكار',
+      cultureTags: 'وسوم الثقافة',
+      cultureInPractice: 'ثقافتنا في الممارسة',
+      totalEmployees: 'إجمالي عدد الموظفين',
+      departmentsList: 'الأقسام',
+      geographicalPresence: 'الانتشار الجغرافي',
+      internationalTeams: 'فرق دولية',
+      orgStructure: 'الهيكل التنظيمي',
+      workModel: 'نموذج العمل العام',
+      benefitConditions: 'الشروط أو القيود حسب الدور'
+    },
+    benefitCategories: {
+      financial: 'مالية',
+      health: 'صحية',
+      growth: 'تطوير',
+      flexibility: 'مرونة',
+      career: 'مسار مهني',
+      additional: 'إضافية'
+    },
+    benefitItems: {
+      'Performance Bonus': 'مكافأة أداء',
+      'Equity / Stock Options': 'أسهم / خيارات ملكية',
+      'Transport Allowance': 'بدل مواصلات',
+      'Meal Allowance': 'بدل وجبات',
+      'Private Health Insurance': 'تأمين صحي خاص',
+      'Dental & Vision Care': 'رعاية الأسنان والنظر',
+      'Mental Health Support': 'دعم الصحة النفسية',
+      'Wellness Stipend': 'بدل عافية',
+      'Training Budget': 'ميزانية تدريب',
+      'Conference Sponsorship': 'رعاية المؤتمرات',
+      'Certification Support': 'دعم الشهادات المهنية',
+      'Language Courses': 'دورات لغات',
+      'Flexible Hours': 'ساعات عمل مرنة',
+      'Remote Work Days': 'أيام عمل عن بُعد',
+      'Compressed Workweek': 'أسبوع عمل مضغوط',
+      'Paid Sabbatical': 'إجازة تفرغ مدفوعة',
+      'Mentorship Programme': 'برنامج إرشاد مهني',
+      'Internal Mobility': 'تنقل داخلي',
+      'Leadership Track': 'مسار قيادي',
+      'Clear Career Ladder': 'سلم وظيفي واضح',
+      'Relocation Support': 'دعم الانتقال',
+      'Parental Leave': 'إجازة والدية',
+      'Laptop & Home Office Kit': 'حاسوب وتجهيزات مكتب منزلي',
+      'Team Retreats': 'لقاءات الفريق'
+    },
+    cultureTags: {
+      Innovation: 'الابتكار',
+      Collaboration: 'التعاون',
+      Flexibility: 'المرونة',
+      'Professional Growth': 'النمو المهني',
+      Diversity: 'التنوع',
+      'Remote Friendly': 'عمل عن بُعد',
+      'Continuous Learning': 'التعلم المستمر',
+      Teamwork: 'العمل الجماعي',
+      Accountability: 'المساءلة',
+      Creativity: 'الإبداع'
+    },
+    hints: {
+      identity: 'أضف الاسم الرسمي والقطاع والدولة.',
+      about: 'أكمل النظرة العامة والرسالة والرؤية.',
+      culture: 'صف بيئة العمل أو اختر وسوم الثقافة.',
+      leadership: 'أضف إجمالي الموظفين أو عضواً قيادياً.',
+      products: 'أضف منتجاً أو خدمة واحدة على الأقل.',
+      environment: 'أكد نموذج العمل وارفع الشعار أو معرض الصور.',
+      benefits: 'اختر ميزة واحدة على الأقل.',
+      achievements: 'أضف الشهادات أو الجوائز أو الإنجازات.',
+      social: 'أضف مبادرة مجتمعية أو استدامة.'
+    }
   }
 };
 
@@ -526,7 +1252,6 @@ export default function BusinessCompanyProfilePage() {
   const [uploadingKind, setUploadingKind] = useState<'logo' | 'cover' | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
-  // Sub-formulários dinâmicos
   const [leaderDraft, setLeaderDraft] = useState({
     fullName: '',
     position: '',
@@ -591,7 +1316,6 @@ export default function BusinessCompanyProfilePage() {
     externalLink: ''
   });
 
-  // Assistente IA: sugestão editável e tradução para revisão
   const [aiTargetField, setAiTargetField] = useState<keyof CompanyProfileData>('overview');
   const [editableAiSuggestion, setEditableAiSuggestion] = useState<string>('');
   const [translateLang, setTranslateLang] = useState<LangCode>('en');
@@ -738,57 +1462,57 @@ export default function BusinessCompanyProfilePage() {
     const sectionChecks: { key: SectionKey; label: string; filled: boolean; hint: string }[] = [
       {
         key: 'identity',
-        label: 'Company Identity',
+        label: tx.sections.identity,
         filled: Boolean(profile.officialName.trim() && profile.industry.trim() && profile.country.trim()),
-        hint: 'Add Official Company Name, Industry, and Country.'
+        hint: tx.hints.identity
       },
       {
         key: 'about',
-        label: 'About the Company',
+        label: tx.sections.about,
         filled: Boolean(profile.overview.trim() && profile.mission.trim() && profile.vision.trim()),
-        hint: 'Fill Company Overview, Mission, and Vision.'
+        hint: tx.hints.about
       },
       {
         key: 'culture',
-        label: 'Company Culture',
+        label: tx.sections.culture,
         filled: Boolean(profile.workEnvironmentDesc.trim() || profile.cultureTags.length > 0),
-        hint: 'Describe Work Environment or select Culture Tags.'
+        hint: tx.hints.culture
       },
       {
         key: 'leadership',
-        label: 'Leadership & Team',
+        label: tx.sections.leadership,
         filled: Boolean(profile.totalEmployees.trim() || profile.leadership.length > 0),
-        hint: 'Add total employees or a leadership member.'
+        hint: tx.hints.leadership
       },
       {
         key: 'products',
-        label: 'Products & Services',
+        label: tx.sections.products,
         filled: profile.productsServices.length > 0,
-        hint: 'Add at least one product or service.'
+        hint: tx.hints.products
       },
       {
         key: 'environment',
-        label: 'Work Environment',
+        label: tx.sections.environment,
         filled: Boolean(profile.workModel && (profile.gallery.length > 0 || logoUrl)),
-        hint: 'Confirm work model and upload logo or workspace gallery media.'
+        hint: tx.hints.environment
       },
       {
         key: 'benefits',
-        label: 'Benefits & Employee Experience',
+        label: tx.sections.benefits,
         filled: Object.values(profile.benefits).some((arr) => arr.length > 0),
-        hint: 'Select at least one benefit offered to employees.'
+        hint: tx.hints.benefits
       },
       {
         key: 'achievements',
-        label: 'Achievements & Certifications',
+        label: tx.sections.achievements,
         filled: profile.achievements.length > 0,
-        hint: 'Add certifications, awards, or milestones.'
+        hint: tx.hints.achievements
       },
       {
         key: 'social',
-        label: 'Social Responsibility & Sustainability',
+        label: tx.sections.social,
         filled: profile.socialInitiatives.length > 0,
-        hint: 'Add a community or sustainability initiative.'
+        hint: tx.hints.social
       }
     ];
 
@@ -796,7 +1520,7 @@ export default function BusinessCompanyProfilePage() {
     const incomplete = sectionChecks.filter((s) => !s.filled);
     const pct = Math.round((completed.length / sectionChecks.length) * 100);
     return { pct, completed, incomplete };
-  }, [profile, logoUrl]);
+  }, [profile, logoUrl, tx]);
 
   const handleSave = async (publishState = isPublished) => {
     setFeedback(null);
@@ -885,24 +1609,23 @@ export default function BusinessCompanyProfilePage() {
   };
 
   const sectionsMeta: { key: SectionKey; label: string; icon: React.ElementType }[] = [
-    { key: 'identity', label: '4.1 Company Identity', icon: Building2 },
-    { key: 'about', label: '4.2 About the Company', icon: Sparkles },
-    { key: 'culture', label: '4.3 Company Culture', icon: Users },
-    { key: 'leadership', label: '4.4 Leadership & Team', icon: Briefcase },
-    { key: 'products', label: '4.5 Products & Services', icon: Layers },
-    { key: 'environment', label: '4.6 Work Environment', icon: Building2 },
-    { key: 'benefits', label: '4.7 Benefits & Experience', icon: Award },
-    { key: 'achievements', label: '4.8 Achievements & Certs', icon: ShieldCheck },
-    { key: 'social', label: '4.9 Social & Sustainability', icon: HeartHandshake }
+    { key: 'identity', label: tx.sections.identity, icon: Building2 },
+    { key: 'about', label: tx.sections.about, icon: Sparkles },
+    { key: 'culture', label: tx.sections.culture, icon: Users },
+    { key: 'leadership', label: tx.sections.leadership, icon: Briefcase },
+    { key: 'products', label: tx.sections.products, icon: Layers },
+    { key: 'environment', label: tx.sections.environment, icon: Building2 },
+    { key: 'benefits', label: tx.sections.benefits, icon: Award },
+    { key: 'achievements', label: tx.sections.achievements, icon: ShieldCheck },
+    { key: 'social', label: tx.sections.social, icon: HeartHandshake }
   ];
 
   if (loading) {
-    return <div className="py-10 text-xs text-gray-400">Loading Company Profile...</div>;
+    return <div className="py-10 text-xs text-gray-400">...</div>;
   }
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho principal e ações */}
       <div className="rounded-2xl bg-[#0c0716] border border-purple-500/25 p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
@@ -996,7 +1719,6 @@ export default function BusinessCompanyProfilePage() {
         </div>
       )}
 
-      {/* Company Profile Strength */}
       <div className="rounded-2xl bg-[#0c0716] border border-purple-500/25 p-5 space-y-3">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-sm font-bold text-white">{tx.strengthTitle}</h2>
@@ -1028,13 +1750,12 @@ export default function BusinessCompanyProfilePage() {
           <div className="p-3 rounded-xl bg-[#080410] border border-white/[0.06]">
             <p className="font-semibold text-purple-300 mb-1">{tx.recommendations}</p>
             <p className="text-gray-400">
-              {strength.incomplete[0]?.hint || 'Profile core sections are complete.'}
+              {strength.incomplete[0]?.hint || tx.allSectionsComplete}
             </p>
           </div>
         </div>
       </div>
 
-      {/* MODO 1: EDIÇÃO POR SECÇÕES */}
       {activeTab === 'edit' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="lg:col-span-3 space-y-1.5">
@@ -1059,7 +1780,6 @@ export default function BusinessCompanyProfilePage() {
                   </button>
                   <button
                     type="button"
-                    title="Toggle public visibility"
                     onClick={() => setVisibility((prev) => ({ ...prev, [key]: !prev[key] }))}
                     className={`px-1.5 py-0.5 rounded text-[10px] cursor-pointer ${
                       visibility[key]
@@ -1067,7 +1787,7 @@ export default function BusinessCompanyProfilePage() {
                         : 'bg-white/10 text-gray-400'
                     }`}
                   >
-                    {visibility[key] ? 'Public' : 'Hidden'}
+                    {visibility[key] ? tx.publicBadge : tx.hiddenBadge}
                   </button>
                 </div>
               );
@@ -1077,25 +1797,22 @@ export default function BusinessCompanyProfilePage() {
           <div className="lg:col-span-9 rounded-2xl bg-[#0c0716] border border-purple-500/25 p-6 space-y-5 text-xs">
             {activeSection === 'identity' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">4.1 Company Identity</h3>
+                <h3 className="text-base font-bold text-white">{tx.sections.identity}</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Logo Upload */}
                   <div className="p-4 rounded-xl bg-[#080410] border border-purple-500/25 space-y-2.5">
-                    <p className="font-semibold text-white">Company Logo</p>
+                    <p className="font-semibold text-white">{tx.companyLogoLabel}</p>
                     {logoUrl && (
                       <img
                         src={logoUrl}
-                        alt="Company Logo"
+                        alt={tx.companyLogoLabel}
                         className="w-16 h-16 rounded-xl object-contain bg-white/5 border border-purple-500/30 p-1"
                       />
                     )}
                     <div className="flex flex-wrap gap-2">
                       <label className="px-3 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/45 border border-purple-400/40 text-white font-semibold cursor-pointer inline-flex items-center gap-1.5">
                         <Upload className="w-3.5 h-3.5" />
-                        <span>
-                          {uploadingKind === 'logo' ? tx.saving : tx.uploadLogo}
-                        </span>
+                        <span>{uploadingKind === 'logo' ? tx.saving : tx.uploadLogo}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -1138,22 +1855,19 @@ export default function BusinessCompanyProfilePage() {
                     </div>
                   </div>
 
-                  {/* Cover Upload */}
                   <div className="p-4 rounded-xl bg-[#080410] border border-purple-500/25 space-y-2.5">
-                    <p className="font-semibold text-white">Cover Image</p>
+                    <p className="font-semibold text-white">{tx.coverImageLabel}</p>
                     {coverUrl && (
                       <img
                         src={coverUrl}
-                        alt="Company Cover"
+                        alt={tx.coverImageLabel}
                         className="w-full h-16 rounded-xl object-cover border border-purple-500/30"
                       />
                     )}
                     <div className="flex flex-wrap gap-2">
                       <label className="px-3 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/45 border border-purple-400/40 text-white font-semibold cursor-pointer inline-flex items-center gap-1.5">
                         <Upload className="w-3.5 h-3.5" />
-                        <span>
-                          {uploadingKind === 'cover' ? tx.saving : tx.uploadCover}
-                        </span>
+                        <span>{uploadingKind === 'cover' ? tx.saving : tx.uploadCover}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -1187,23 +1901,25 @@ export default function BusinessCompanyProfilePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    ['officialName', 'Official Company Name'],
-                    ['commercialName', 'Commercial Name'],
-                    ['tagline', 'Company Tagline'],
-                    ['industry', 'Industry'],
-                    ['companyType', 'Company Type'],
-                    ['yearFounded', 'Year Founded'],
-                    ['companySize', 'Company Size'],
-                    ['website', 'Website'],
-                    ['officialEmail', 'Official E-mail'],
-                    ['businessPhone', 'Business Phone'],
-                    ['country', 'Country'],
-                    ['provinceState', 'Province/State'],
-                    ['city', 'City'],
-                    ['physicalAddress', 'Physical Address']
-                  ].map(([fieldKey, labelText]) => (
+                    'officialName',
+                    'commercialName',
+                    'tagline',
+                    'industry',
+                    'companyType',
+                    'yearFounded',
+                    'companySize',
+                    'website',
+                    'officialEmail',
+                    'businessPhone',
+                    'country',
+                    'provinceState',
+                    'city',
+                    'physicalAddress'
+                  ].map((fieldKey) => (
                     <div key={fieldKey}>
-                      <label className="block text-gray-400 mb-1">{labelText}</label>
+                      <label className="block text-gray-400 mb-1">
+                        {tx.fields[fieldKey] || fieldKey}
+                      </label>
                       <input
                         type="text"
                         value={String(profile[fieldKey as keyof CompanyProfileData] || '')}
@@ -1223,50 +1939,48 @@ export default function BusinessCompanyProfilePage() {
 
             {activeSection === 'about' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">4.2 About the Company</h3>
-                {[
-                  ['overview', 'Company Overview'],
-                  ['ourStory', 'Our Story'],
-                  ['mission', 'Mission'],
-                  ['vision', 'Vision'],
-                  ['coreValues', 'Core Values'],
-                  ['whatWeDo', 'What We Do'],
-                  ['ourImpact', 'Our Impact']
-                ].map(([fieldKey, labelText]) => (
-                  <div key={fieldKey}>
-                    <label className="block text-gray-400 mb-1">{labelText}</label>
-                    <textarea
-                      rows={3}
-                      value={String(profile[fieldKey as keyof CompanyProfileData] || '')}
-                      onChange={(e) =>
-                        setProfile((prev) => ({
-                          ...prev,
-                          [fieldKey]: e.target.value
-                        }))
-                      }
-                      className="w-full bg-white/5 border border-purple-500/20 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-purple-500"
-                    />
-                  </div>
-                ))}
+                <h3 className="text-base font-bold text-white">{tx.sections.about}</h3>
+                {['overview', 'ourStory', 'mission', 'vision', 'coreValues', 'whatWeDo', 'ourImpact'].map(
+                  (fieldKey) => (
+                    <div key={fieldKey}>
+                      <label className="block text-gray-400 mb-1">
+                        {tx.fields[fieldKey] || fieldKey}
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={String(profile[fieldKey as keyof CompanyProfileData] || '')}
+                        onChange={(e) =>
+                          setProfile((prev) => ({
+                            ...prev,
+                            [fieldKey]: e.target.value
+                          }))
+                        }
+                        className="w-full bg-white/5 border border-purple-500/20 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                  )
+                )}
               </div>
             )}
 
             {activeSection === 'culture' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">4.3 Company Culture</h3>
+                <h3 className="text-base font-bold text-white">{tx.sections.culture}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    ['workEnvironmentDesc', 'Work Environment'],
-                    ['leadershipStyle', 'Leadership Style'],
-                    ['teamCollaboration', 'Team Collaboration'],
-                    ['diversityInclusion', 'Diversity & Inclusion'],
-                    ['professionalGrowth', 'Professional Growth'],
-                    ['workLifeBalance', 'Work-Life Balance'],
-                    ['learningCulture', 'Learning Culture'],
-                    ['innovationCulture', 'Innovation Culture']
-                  ].map(([fieldKey, labelText]) => (
+                    'workEnvironmentDesc',
+                    'leadershipStyle',
+                    'teamCollaboration',
+                    'diversityInclusion',
+                    'professionalGrowth',
+                    'workLifeBalance',
+                    'learningCulture',
+                    'innovationCulture'
+                  ].map((fieldKey) => (
                     <div key={fieldKey}>
-                      <label className="block text-gray-400 mb-1">{labelText}</label>
+                      <label className="block text-gray-400 mb-1">
+                        {tx.fields[fieldKey] || fieldKey}
+                      </label>
                       <textarea
                         rows={2}
                         value={String(profile[fieldKey as keyof CompanyProfileData] || '')}
@@ -1283,22 +1997,22 @@ export default function BusinessCompanyProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-400 mb-2">Culture Tags</label>
+                  <label className="block text-gray-400 mb-2">{tx.fields.cultureTags}</label>
                   <div className="flex flex-wrap gap-2">
-                    {CULTURE_TAG_SUGGESTIONS.map((tag) => {
-                      const active = profile.cultureTags.includes(tag);
+                    {CULTURE_TAG_KEYS.map((tagKey) => {
+                      const active = profile.cultureTags.includes(tagKey);
                       return (
                         <button
-                          key={tag}
+                          key={tagKey}
                           type="button"
-                          onClick={() => toggleCultureTag(tag)}
+                          onClick={() => toggleCultureTag(tagKey)}
                           className={`px-3 py-1 rounded-full border text-xs cursor-pointer ${
                             active
                               ? 'bg-purple-600/35 border-purple-400 text-white font-semibold'
                               : 'bg-white/5 border-white/10 text-gray-300'
                           }`}
                         >
-                          {tag}
+                          {tx.cultureTags[tagKey] || tagKey}
                         </button>
                       );
                     })}
@@ -1306,7 +2020,7 @@ export default function BusinessCompanyProfilePage() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-400 mb-1">Our Culture in Practice</label>
+                  <label className="block text-gray-400 mb-1">{tx.fields.cultureInPractice}</label>
                   <textarea
                     rows={3}
                     value={profile.cultureInPractice}
@@ -1321,17 +2035,17 @@ export default function BusinessCompanyProfilePage() {
 
             {activeSection === 'leadership' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">4.4 Leadership & Team</h3>
+                <h3 className="text-base font-bold text-white">{tx.sections.leadership}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    ['totalEmployees', 'Total Number of Employees'],
-                    ['departmentsList', 'Departments'],
-                    ['geographicalPresence', 'Geographical Presence'],
-                    ['internationalTeams', 'International Teams'],
-                    ['orgStructure', 'Organisational Structure']
-                  ].map(([k, lbl]) => (
+                    'totalEmployees',
+                    'departmentsList',
+                    'geographicalPresence',
+                    'internationalTeams',
+                    'orgStructure'
+                  ].map((k) => (
                     <div key={k}>
-                      <label className="block text-gray-400 mb-1">{lbl}</label>
+                      <label className="block text-gray-400 mb-1">{tx.fields[k] || k}</label>
                       <input
                         type="text"
                         value={String(profile[k as keyof CompanyProfileData] || '')}
@@ -1345,39 +2059,34 @@ export default function BusinessCompanyProfilePage() {
                 </div>
 
                 <div className="p-4 rounded-xl bg-[#080410] border border-purple-500/20 space-y-3">
-                  <p className="font-semibold text-white">Leadership Member</p>
+                  <p className="font-semibold text-white">{tx.addItem}</p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <input
                       type="text"
-                      placeholder="Full Name"
                       value={leaderDraft.fullName}
                       onChange={(e) => setLeaderDraft({ ...leaderDraft, fullName: e.target.value })}
                       className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                     />
                     <input
                       type="text"
-                      placeholder="Position"
                       value={leaderDraft.position}
                       onChange={(e) => setLeaderDraft({ ...leaderDraft, position: e.target.value })}
                       className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                     />
                     <input
                       type="text"
-                      placeholder="Department"
                       value={leaderDraft.department}
                       onChange={(e) => setLeaderDraft({ ...leaderDraft, department: e.target.value })}
                       className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                     />
                     <input
                       type="text"
-                      placeholder="LinkedIn Profile URL"
                       value={leaderDraft.linkedin}
                       onChange={(e) => setLeaderDraft({ ...leaderDraft, linkedin: e.target.value })}
                       className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                     />
                     <input
                       type="text"
-                      placeholder="Responsibilities"
                       value={leaderDraft.responsibilities}
                       onChange={(e) =>
                         setLeaderDraft({ ...leaderDraft, responsibilities: e.target.value })
@@ -1386,7 +2095,6 @@ export default function BusinessCompanyProfilePage() {
                     />
                     <textarea
                       rows={2}
-                      placeholder="Professional Biography"
                       value={leaderDraft.bio}
                       onChange={(e) => setLeaderDraft({ ...leaderDraft, bio: e.target.value })}
                       className="md:col-span-2 bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
@@ -1431,12 +2139,11 @@ export default function BusinessCompanyProfilePage() {
                         <p className="font-bold text-white">
                           {m.fullName} — {m.position}
                         </p>
-                        <p className="text-gray-400">
-                          {m.department} • {m.verified ? 'Verified' : 'Declared by Company'}
-                        </p>
+                        <p className="text-gray-400">{m.department}</p>
                       </div>
                       <button
                         type="button"
+                        aria-label={tx.deleteItem}
                         onClick={() => {
                           if (!window.confirm(tx.confirmDelete)) return;
                           setProfile((prev) => ({
@@ -1456,39 +2163,34 @@ export default function BusinessCompanyProfilePage() {
 
             {activeSection === 'products' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">4.5 Products & Services</h3>
+                <h3 className="text-base font-bold text-white">{tx.sections.products}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input
                     type="text"
-                    placeholder="Product/Service Name"
                     value={productDraft.name}
                     onChange={(e) => setProductDraft({ ...productDraft, name: e.target.value })}
                     className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                   />
                   <input
                     type="text"
-                    placeholder="Category"
                     value={productDraft.category}
                     onChange={(e) => setProductDraft({ ...productDraft, category: e.target.value })}
                     className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                   />
                   <input
                     type="text"
-                    placeholder="Website"
                     value={productDraft.website}
                     onChange={(e) => setProductDraft({ ...productDraft, website: e.target.value })}
                     className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                   />
                   <input
                     type="text"
-                    placeholder="Key Features"
                     value={productDraft.features}
                     onChange={(e) => setProductDraft({ ...productDraft, features: e.target.value })}
                     className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                   />
                   <textarea
                     rows={2}
-                    placeholder="Description"
                     value={productDraft.description}
                     onChange={(e) =>
                       setProductDraft({ ...productDraft, description: e.target.value })
@@ -1535,6 +2237,7 @@ export default function BusinessCompanyProfilePage() {
                       </div>
                       <button
                         type="button"
+                        aria-label={tx.deleteItem}
                         onClick={() => {
                           if (!window.confirm(tx.confirmDelete)) return;
                           setProfile((prev) => ({
@@ -1554,9 +2257,9 @@ export default function BusinessCompanyProfilePage() {
 
             {activeSection === 'environment' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">4.6 Work Environment</h3>
+                <h3 className="text-base font-bold text-white">{tx.sections.environment}</h3>
                 <div>
-                  <label className="block text-gray-400 mb-1">General Work Model</label>
+                  <label className="block text-gray-400 mb-1">{tx.fields.workModel}</label>
                   <select
                     value={profile.workModel}
                     onChange={(e) =>
@@ -1599,7 +2302,6 @@ export default function BusinessCompanyProfilePage() {
                   </select>
                   <input
                     type="text"
-                    placeholder="Caption"
                     value={galleryDraft.caption}
                     onChange={(e) =>
                       setGalleryDraft({ ...galleryDraft, caption: e.target.value })
@@ -1608,7 +2310,7 @@ export default function BusinessCompanyProfilePage() {
                   />
                   <label className="px-3 py-2 rounded-xl bg-purple-600/30 border border-purple-400/40 text-white font-semibold cursor-pointer inline-flex items-center justify-center gap-1.5">
                     <Upload className="w-3.5 h-3.5" />
-                    <span>{tx.uploadLogo}</span>
+                    <span>{tx.uploadCover}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -1672,29 +2374,29 @@ export default function BusinessCompanyProfilePage() {
 
             {activeSection === 'benefits' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">
-                  4.7 Benefits & Employee Experience
-                </h3>
+                <h3 className="text-base font-bold text-white">{tx.sections.benefits}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(Object.keys(BENEFIT_OPTIONS) as BenefitCategoryKey[]).map((catKey) => (
+                  {(Object.keys(BENEFIT_KEYS) as BenefitCategoryKey[]).map((catKey) => (
                     <div
                       key={catKey}
                       className="p-3.5 rounded-xl bg-[#080410] border border-white/[0.06] space-y-2"
                     >
-                      <p className="font-bold text-purple-200 capitalize">{catKey}</p>
-                      {BENEFIT_OPTIONS[catKey].map((opt) => {
-                        const checked = (profile.benefits[catKey] || []).includes(opt);
+                      <p className="font-bold text-purple-200">
+                        {tx.benefitCategories[catKey] || catKey}
+                      </p>
+                      {BENEFIT_KEYS[catKey].map((optKey) => {
+                        const checked = (profile.benefits[catKey] || []).includes(optKey);
                         return (
                           <label
-                            key={opt}
+                            key={optKey}
                             className="flex items-center gap-2 text-gray-300 cursor-pointer"
                           >
                             <input
                               type="checkbox"
                               checked={checked}
-                              onChange={() => toggleBenefit(catKey, opt)}
+                              onChange={() => toggleBenefit(catKey, optKey)}
                             />
-                            <span>{opt}</span>
+                            <span>{tx.benefitItems[optKey] || optKey}</span>
                           </label>
                         );
                       })}
@@ -1702,9 +2404,7 @@ export default function BusinessCompanyProfilePage() {
                   ))}
                 </div>
                 <div>
-                  <label className="block text-gray-400 mb-1">
-                    Conditions or Role Restrictions
-                  </label>
+                  <label className="block text-gray-400 mb-1">{tx.fields.benefitConditions}</label>
                   <textarea
                     rows={2}
                     value={profile.benefitConditions}
@@ -1719,13 +2419,10 @@ export default function BusinessCompanyProfilePage() {
 
             {activeSection === 'achievements' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">
-                  4.8 Achievements & Certifications
-                </h3>
+                <h3 className="text-base font-bold text-white">{tx.sections.achievements}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input
                     type="text"
-                    placeholder="Title"
                     value={achievementDraft.title}
                     onChange={(e) =>
                       setAchievementDraft({ ...achievementDraft, title: e.target.value })
@@ -1734,7 +2431,6 @@ export default function BusinessCompanyProfilePage() {
                   />
                   <input
                     type="text"
-                    placeholder="Issuing Organisation"
                     value={achievementDraft.issuingOrg}
                     onChange={(e) =>
                       setAchievementDraft({ ...achievementDraft, issuingOrg: e.target.value })
@@ -1743,7 +2439,6 @@ export default function BusinessCompanyProfilePage() {
                   />
                   <input
                     type="text"
-                    placeholder="Issue Date"
                     value={achievementDraft.issueDate}
                     onChange={(e) =>
                       setAchievementDraft({ ...achievementDraft, issueDate: e.target.value })
@@ -1752,7 +2447,6 @@ export default function BusinessCompanyProfilePage() {
                   />
                   <input
                     type="text"
-                    placeholder="Expiry Date (if applicable)"
                     value={achievementDraft.expiryDate}
                     onChange={(e) =>
                       setAchievementDraft({ ...achievementDraft, expiryDate: e.target.value })
@@ -1761,7 +2455,6 @@ export default function BusinessCompanyProfilePage() {
                   />
                   <input
                     type="text"
-                    placeholder="Verification URL"
                     value={achievementDraft.verificationUrl}
                     onChange={(e) =>
                       setAchievementDraft({
@@ -1838,27 +2531,22 @@ export default function BusinessCompanyProfilePage() {
 
             {activeSection === 'social' && (
               <div className="space-y-4">
-                <h3 className="text-base font-bold text-white">
-                  4.9 Social Responsibility & Sustainability
-                </h3>
+                <h3 className="text-base font-bold text-white">{tx.sections.social}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input
                     type="text"
-                    placeholder="Title"
                     value={socialDraft.title}
                     onChange={(e) => setSocialDraft({ ...socialDraft, title: e.target.value })}
                     className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                   />
                   <input
                     type="text"
-                    placeholder="Date"
                     value={socialDraft.date}
                     onChange={(e) => setSocialDraft({ ...socialDraft, date: e.target.value })}
                     className="bg-white/5 border border-purple-500/20 rounded-xl px-3 py-2 text-white"
                   />
                   <input
                     type="text"
-                    placeholder="External Link"
                     value={socialDraft.externalLink}
                     onChange={(e) =>
                       setSocialDraft({ ...socialDraft, externalLink: e.target.value })
@@ -1867,7 +2555,6 @@ export default function BusinessCompanyProfilePage() {
                   />
                   <textarea
                     rows={2}
-                    placeholder="Description"
                     value={socialDraft.description}
                     onChange={(e) =>
                       setSocialDraft({ ...socialDraft, description: e.target.value })
@@ -1931,13 +2618,12 @@ export default function BusinessCompanyProfilePage() {
         </div>
       )}
 
-      {/* MODO 2: SKILLGAP AI ASSISTANT */}
       {activeTab === 'ai' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
           <div className="rounded-2xl bg-[#0c0716] border border-purple-500/25 p-6 space-y-4">
             <h3 className="text-base font-bold text-white">{tx.aiWriterTitle}</h3>
             <div>
-              <label className="block text-gray-400 mb-1">Target Field</label>
+              <label className="block text-gray-400 mb-1">{tx.targetFieldLabel}</label>
               <select
                 value={aiTargetField}
                 onChange={(e) =>
@@ -1945,14 +2631,20 @@ export default function BusinessCompanyProfilePage() {
                 }
                 className="w-full bg-[#080410] border border-purple-500/30 rounded-xl px-3 py-2 text-white"
               >
-                <option value="overview">Company Overview</option>
-                <option value="ourStory">Our Story</option>
-                <option value="mission">Mission</option>
-                <option value="vision">Vision</option>
-                <option value="coreValues">Core Values</option>
-                <option value="whatWeDo">What We Do</option>
-                <option value="ourImpact">Our Impact</option>
-                <option value="cultureInPractice">Our Culture in Practice</option>
+                {[
+                  'overview',
+                  'ourStory',
+                  'mission',
+                  'vision',
+                  'coreValues',
+                  'whatWeDo',
+                  'ourImpact',
+                  'cultureInPractice'
+                ].map((k) => (
+                  <option key={k} value={k}>
+                    {tx.fields[k] || k}
+                  </option>
+                ))}
               </select>
             </div>
             <button
@@ -2038,27 +2730,26 @@ export default function BusinessCompanyProfilePage() {
         </div>
       )}
 
-      {/* MODO 3: PRÉ-VISUALIZAÇÃO PÚBLICA */}
       {activeTab === 'preview' && (
         <div className="rounded-2xl bg-[#0c0716] border border-purple-500/25 overflow-hidden text-xs">
           <div className="px-6 py-3 bg-purple-950/40 border-b border-purple-500/20 text-purple-200">
             {tx.publicWarning}
           </div>
           {coverUrl && (
-            <img src={coverUrl} alt="Cover" className="w-full h-44 object-cover" />
+            <img src={coverUrl} alt={tx.coverImageLabel} className="w-full h-44 object-cover" />
           )}
           <div className="p-6 space-y-4">
             <div className="flex items-center gap-4">
               {logoUrl && (
                 <img
                   src={logoUrl}
-                  alt="Logo"
+                  alt={tx.companyLogoLabel}
                   className="w-16 h-16 rounded-2xl object-contain bg-white/5 border border-purple-500/30 p-1.5"
                 />
               )}
               <div>
                 <h3 className="text-xl font-extrabold text-white">
-                  {profile.commercialName || profile.officialName || 'Company Name'}
+                  {profile.commercialName || profile.officialName || tx.title}
                 </h3>
                 <p className="text-purple-300">
                   {profile.industry} • {[profile.city, profile.country].filter(Boolean).join(', ')}
@@ -2068,7 +2759,7 @@ export default function BusinessCompanyProfilePage() {
 
             {visibility.about && profile.overview && (
               <div>
-                <h4 className="font-bold text-white mb-1">Overview</h4>
+                <h4 className="font-bold text-white mb-1">{tx.fields.overview}</h4>
                 <p className="text-gray-300 leading-relaxed">{profile.overview}</p>
               </div>
             )}
@@ -2077,13 +2768,13 @@ export default function BusinessCompanyProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {profile.mission && (
                   <div className="p-4 rounded-xl bg-[#080410] border border-white/[0.06]">
-                    <h4 className="font-bold text-white mb-1">Mission</h4>
+                    <h4 className="font-bold text-white mb-1">{tx.fields.mission}</h4>
                     <p className="text-gray-300">{profile.mission}</p>
                   </div>
                 )}
                 {profile.vision && (
                   <div className="p-4 rounded-xl bg-[#080410] border border-white/[0.06]">
-                    <h4 className="font-bold text-white mb-1">Vision</h4>
+                    <h4 className="font-bold text-white mb-1">{tx.fields.vision}</h4>
                     <p className="text-gray-300">{profile.vision}</p>
                   </div>
                 )}
@@ -2097,7 +2788,7 @@ export default function BusinessCompanyProfilePage() {
                     key={tag}
                     className="px-2.5 py-1 rounded-full bg-purple-950/70 border border-purple-500/30 text-purple-200"
                   >
-                    {tag}
+                    {tx.cultureTags[tag] || tag}
                   </span>
                 ))}
               </div>
