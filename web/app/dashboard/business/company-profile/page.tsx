@@ -1056,7 +1056,7 @@ const UI_COPY: Record<LangCode, LocalizedCopy> = {
       Collaboration: 'Zusammenarbeit',
       Flexibility: 'Flexibilität',
       'Professional Growth': 'Berufliche Entwicklung',
-      Diversity: 'Vielfalt',
+      Diversity: 'Diversité',
       'Remote Friendly': 'Remote-freundlich',
       'Continuous Learning': 'Kontinuierliches Lernen',
       Teamwork: 'Teamarbeit',
