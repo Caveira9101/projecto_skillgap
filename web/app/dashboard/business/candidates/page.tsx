@@ -63,6 +63,7 @@ interface CandidateExperienceItem {
   company_name?: string | null;
   organization?: string | null;
   period?: string | null;
+  period_location?: string | null;
   responsibilities?: string | null;
   description?: string | null;
   is_current?: boolean | null;
